@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -19,12 +20,6 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-#
-# Note on config file:
-#   It is possible to use a config file named 'gmusicproxy.cfg' placed in any 
-#   XDG-compliant folders like /home/user/.config/ or in /etc/xdg/. It is also
-#   possible to use an arbitrary config file using option '--config'.
-#   Any command-line option can be used inside the config file.
 
 import BaseHTTPServer, socket, urlparse, urllib2
 import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO
@@ -62,7 +57,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0] if 'title' in params else '', query_artist=params['artist'][0] if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'yes')
             if result: self.wfile.write(result)
         elif parsedPath.path == '/get_by_search' and 'type' in params and ('title' in params or 'artist' in params):
-            result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0] if 'title' in params else '', query_artist=params['artist'][0] if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'yes')
+            result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0] if 'title' in params else '', query_artist=params['artist'][0] if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no')
             if result and len(result)>0:
                 if params['type'][0].lower().strip() == 'artist':
                     self._get_top_tracks_artist(result, numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTopTracks)
@@ -79,7 +74,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if 'transient' in params and params['transient'][0].lower().strip() == 'no' and ('name' not in params or len(params['name'][0])==0):
                 print 'A new persistent station requires a name!'
                 return
-            result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0] if 'title' in params else '', query_artist=params['artist'][0] if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'yes')
+            result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0] if 'title' in params else '', query_artist=params['artist'][0] if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no')
             if result and len(result)>0:
                 self._get_new_station(id=result, type=params['type'][0].lower().strip(), numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation, transient=params['transient'][0].lower().strip() if 'transient' in params else 'yes', name=params['name'][0] if 'name' in params else transientStationName)
         else:
@@ -121,27 +116,27 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         print 'Getting all stations as plain-text list...' if format == 'text' else 'Getting all stations as M3U list...'
         stations = api.get_all_stations()
         printDebug(pprint.pformat(stations))
-        if format != 'text': self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:' if format == 'text' else 'generated playlist:\n#EXTM3U')
+        if format.lower().strip() != 'text': self.wfile.write('#EXTM3U\n')
+        printDebug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
         for station in stations:
             if 'id' in station:
-                if format == 'text':
-                    line = ('%shttp://%s:%s/get_station?id=%s' % ('%s%s' % (station['name'], separator) if ( 'name' in station and onlyUrl != 'yes' ) else '', config['host'], config['port'], station['id'])).encode('utf-8')
+                if format.lower().strip() == 'text':
+                    line = ('%shttp://%s:%s/get_station?id=%s' % ('%s%s' % (station['name'], separator) if ( 'name' in station and onlyUrl.lower().strip() != 'yes' ) else '', config['host'], config['port'], station['id'])).encode('utf-8')
                 else:
                     line = ('#EXTINF:-1,%s\nhttp://%s:%s/get_station?id=%s' % (station['name'] if 'name' in station else '', config['host'], config['port'], station['id'])).encode('utf-8')
                 self.wfile.write('%s\n' % line)
                 printDebug(line)
 
     def _get_all_playlists(self, format, separator, onlyUrl):
-        print 'Getting all playlists as plain-text list...' if format == 'text' else 'Getting all playlists as M3U list...'
+        print 'Getting all playlists as plain-text list...' if format.lower().strip() == 'text' else 'Getting all playlists as M3U list...'
         playlists = api.get_all_playlists()
         printDebug(pprint.pformat(playlists))
-        if format != 'text': self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:' if format == 'text' else 'generated playlist:\n#EXTM3U')
+        if format.lower().strip() != 'text': self.wfile.write('#EXTM3U\n')
+        printDebug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
         for playlist in playlists:
             if 'id' in playlist:
-                if format == 'text':
-                    line = ('%shttp://%s:%s/get_playlist?id=%s' % ('%s%s' % (playlist['name'], separator) if ( 'name' in playlist and onlyUrl != 'yes' ) else '', config['host'], config['port'], playlist['id'])).encode('utf-8')
+                if format.lower().strip() == 'text':
+                    line = ('%shttp://%s:%s/get_playlist?id=%s' % ('%s%s' % (playlist['name'], separator) if ( 'name' in playlist and onlyUrl.lower().strip() != 'yes' ) else '', config['host'], config['port'], playlist['id'])).encode('utf-8')
                 else:
                     line = ('#EXTINF:-1,%s\nhttp://%s:%s/get_playlist?id=%s' % (playlist['name'] if 'name' in playlist else '', config['host'], config['port'], playlist['id'])).encode('utf-8')
                 self.wfile.write('%s\n' % line)
@@ -340,9 +335,9 @@ def getOptions(filename):
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=file, help='specific configuration file to use')
     parser.add_argument('-e', '--email', help='email address of the Google account [required]')
-    parser.add_argument('-p', '--password', help='password of the Google account (or a specific one if two-steps authentication is enabled) [required]')
+    parser.add_argument('-p', '--password', help='password of the Google account (or an application-specific one if two-factor authentication is enabled) [required]')
     parser.add_argument('-d', '--device_id', help='the ID of a registered Android device [required]')
-    parser.add_argument('-H', '--host', help='host in the generated urls [default: autodetected local ip address]')
+    parser.add_argument('-H', '--host', help='host in the generated URLs [default: autodetected local ip address]')
     parser.add_argument('-P', '--port', type=int, help='default TCP port to use [default: 9999]')
     parser.add_argument('-L', '--list_devices', default=False, action='store_true', help='list the registered devices')
     parser.add_argument('-D', '--debug', default=False, action='store_true', help='enable debug messages')
