@@ -1,4 +1,4 @@
-#gmusicproxy: Google Play Music Proxy
+#GMusicProxy: Google Play Music Proxy
 
 *"Let's stream Google Play Music using any music program"*
 
@@ -21,6 +21,7 @@ This is not supported nor endorsed by Google. It's aim is the abuse of the servi
 - get access to all the songs in your collection, playlists as well as to the already registered stations
 - search by name any artist, album or song
 - request a transient (it will be not registered in your account) station based on any search
+- stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ## Install
 **[TODO]**
@@ -53,42 +54,122 @@ All the command-line options can be specified in a configuration file. A configu
 `email = my.email@google.com
 password = my-secret-password
 device_id = 54bbd32a309a34ef`
-When the proxy is launched it searchs for a file named `gmusicproxy.cfg` on the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using option `--config`.
+When the proxy is launched it searches for a file named `gmusicproxy.cfg` on the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using option `--config`.
 
 ### URL-based interface
-The only to way to use the service is to query the proxy using properly formatted HTTP requests on the configured port. Such URLs can be used directly in music programs or in scripts or in a browser. A URL looks like this: `http://host:port/command?param_1=value&param_2=value`. Consider that any song, album, artist, playlist or station got an unique ID in GPM API but there are many methods to discover them.
+The only to way to use the service is to query the proxy using properly formatted HTTP requests on the configured port. Such URLs can be used directly in music programs or in scripts or in a browser. A URL looks like this: `http://host:port/command?param_1=value&param_2=value`. I don't apply any validation to the submitted values: please, be nice with proxy and don't exploit it! :)
+
+Consider that any song, album, artist, playlist or station got an unique ID in GPM API but there are many methods to discover them. 
 
 Here a list of the supported requests:
 - `/get_collection`: reports an M3U playlist with all the songs in your personal collection.
 - `/search_id`: reports the unique ID as result of a search for an artist, a song or an album.
-  allowed parameters:
+  Allowed parameters:
+     - `type`: search for `artist`, `album` or `song` [required]
+     - `title`: a string to search in the title of the album or of the song
+     - `artist`: a string to search in the name of the artist in any kind of search
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song).
+  Allowed parameters:
+     - `type`: search for `artist`, `album` or `song` [required]
+     - `title`: a string to search in the title of the album or of the song
+     - `artist`: a string to search in the name of the artist in any kind of search
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+     - `num_tracks`: the number of top songs to return in a search for artist [default: 20]
+- `/get_all_stations`: reports a list of registered stations as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one station per line).
+  Allowed parameters:
+     - `type`: `m3u` for an M3U list or `text` for a plain-text list with lines like `Name of the Station|URL to an M3U playlist with station content` [default: `m3u`]
+     - `separator`: a separator for the plain-text lists [default: `|`]
+     - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the station is totally omitted) [default: `no`]
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+- `/get_all_playlists`: reports a list of the playlists registered in the account as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one playlist per line).
+  The allowed parameters are the same as `/get_all_stations`.
+- `/get_new_station_by_search`: reports as M3U list the content of new (transient or permanent) station created on the result of a search for artist/album/song.
+  Allowed parameters:
+     - `type`: search for `artist`, `album` or `song` [required]
+     - `title`: a string to search in the title of the album or of the song
+     - `artist`: a string to search in the name of the artist in any kind of search
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+     - `num_tracks`: the number of songs to extract from the new station [default: 20]
+     - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
+     - `name`: the name of the persistent station to create [required if `transient` is `no`]
+- `/get_new_station_by_id`: reports as M3U list the content of new (transient or permanent) station created on a specified artist/album/song.
+  Allowed parameters:
+     - `id`: the unique identifier of the artist/album/song [required]
+     - `type`: the type of id specified among `artist`, `album` and `song` [required]
+     - `num_tracks`: the number of songs to extract from the new station [default: 20]
+     - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
+     - `name`: the name of the persistent station to create [required if `transient` is `no`]
+- `/get_station`: reports an M3U list of tracks associated to the given station.
+  Allowed parameters:
+     - `id`: the unique identifier of the station [required]
+     - `num_tracks`: the number of tracks to extract [default: 20]
+- `/get_playlist`: reports the content of a registered playlist as an M3U list.
+  Allowed parameters:
+     - `id`: the unique identifier of the playlist [required]
+- `/get_album`: reports the content of an album as an M3U list.
+  Allowed parameters:
+     - `id`: the unique identifier of the album [required]
+- `/get_song`: returns the specified song as a standard MP3 file with IDv3 tag.
+  Allowed parameters:
+     - `id`: the unique identifier of the song [required]
+- `/get_top_tracks_artist`: reports an M3U list with the top songs of a specified artist.
+  Allowed parameters:
+     - `id`: the unique identifier of the artist [required]
+     - `type`: the type of id specified among `artist`, `album` and `song` [required]
+     - `num_tracks`: the number of top songs to return [default: 20]
 
-*[TO DO]*
+## Examples of integration with other programs
+### [MPD][1]
+- You can copy any M3U list generated by the proxy in the playlists registered inside MPD. MPD usually keeps the playlists inside the folder specified in `playlist_directory` of its configuration file `mpd.conf`.
 
-- `/get_all_stations`
-- `/get_all_playlists`
-- `/get_station`
-- `/get_playlist`
-- `/get_album`
-- `/get_top_tracks_artist`
+  ```bash
+  curl -s 'http://host:port/get_by_search?type=album&artist=Queen&title=Greatest%20Hits' >
+    /var/lib/mpd/playlists/queen.m3u
+  mpc load queen
+  mpc play
+  ```
+  
+- You can also request a fresh list of songs from a station and add it to the current playlist.
 
-- `/get_by_search`
-- `/get_new_station_by_id`
-- `/get_new_station_by_search`
-- `/get_song`
+  ```bash
+  mpd clear
+  curl -s 'http://host:port/get_new_station_by_search?type=artist&artist=Queen&num_tracks=100' | 
+    grep -v ^# | while read url; do mpc add "$url"; done
+  mpc play
+  ```
+
+### [VLC][2]
+- You can listen from the generated playlist using VLC from command-line.
+
+  ```bash
+  curl -s 'http://host:port/get_by_search?type=album&artist=Rolling%20Stones&title=tattoo&exact=no' | vlc -
+  ```
+- You can automatically choose at random one registered station and extract 50 fresh songs from it.
+
+  ```bash
+  curl -s 'http://host:port/get_all_stations?format=text&only_url=yes&num_tracks=50' | sort -R | head -n1 | vlc -
+  ```
 
 
-### Known problems
+## Support
+Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
+
+Feel free to open [bug reports][4] (complete of verbose output produced with option `--debug`) on GitHub, to fork it and to make [pull requests][5] for your contributions.
+
+### Known problems / Ideas
 - It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
+- The stations by genre are missing at the moment: to ask about this to Simon.
+- The correct MIME-type of the MP3 file as well as of the M3U list are not reported in the HTTP replies: to fix.
+- Isolate the functionalities that can work without an All Access subscription and add a specific configuration paramenter: to do.
 
 ### Limitations
-The proxy can manage only one request at time. The internal structure of the proxy can be obviuosly extended to manage concurrent requests but I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
+The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
 
 As stated above, you need the device ID of a registered Android device in order to stream the music. This is a requirement of the Google API. An alternative could be to register a virtual-device using the emulator of the Android SDK.
 
 [1]: http://www.musicpd.org/
 [2]: http://www.videolan.org/vlc/
 [3]: https://github.com/simon-weber/Unofficial-Google-Music-API
-
-
-
+[4]: https://github.com/diraimondo/gmusicproxy/issues
+[5]: https://github.com/diraimondo/gmusicproxy/pulls
