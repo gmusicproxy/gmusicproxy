@@ -39,23 +39,29 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if parsedPath.path == '/get_song' and 'id' in params:
             self._get_song(id=params['id'][0])
         elif parsedPath.path == '/get_all_stations':
+            if self._check_aa(): return
             self._get_all_stations(format=params['format'][0] if 'format' in params else 'm3u', separator=params['separator'][0] if 'separator' in params else '|', onlyUrl=params['only_url'][0] if 'only_url' in params else 'no')
         elif parsedPath.path == '/get_all_playlists':
             self._get_all_playlists(format=params['format'][0] if 'format' in params else 'm3u', separator=params['separator'][0] if 'separator' in params else '|', onlyUrl=params['only_url'][0] if 'only_url' in params else 'no')
         elif parsedPath.path == '/get_station' and 'id' in params:
+            if self._check_aa(): return
             self._get_station(id=params['id'][0], numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation)
         elif parsedPath.path == '/get_playlist' and 'id' in params:
             self._get_playlist(id=params['id'][0])
         elif parsedPath.path == '/get_album' and 'id' in params:
+            if self._check_aa(): return
             self._get_album(id=params['id'][0])
         elif parsedPath.path == '/get_top_tracks_artist' and 'id' in params:
+            if self._check_aa(): return
             self._get_top_tracks_artist(id=params['id'][0], numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTopTracks)
         elif parsedPath.path == '/get_collection':
             self._get_collection()
         elif parsedPath.path == '/search_id' and 'type' in params and ('title' in params or 'artist' in params):
+            if self._check_aa(): return
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0] if 'title' in params else '', query_artist=params['artist'][0] if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'yes')
             if result: self.wfile.write(result)
         elif parsedPath.path == '/get_by_search' and 'type' in params and ('title' in params or 'artist' in params):
+            if self._check_aa(): return
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0] if 'title' in params else '', query_artist=params['artist'][0] if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no')
             if result and len(result)>0:
                 if params['type'][0].lower().strip() == 'artist':
@@ -65,11 +71,13 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 elif  params['type'][0].lower().strip() == 'album':
                     self._get_album(result)
         elif parsedPath.path == '/get_new_station_by_id' and 'id' in params and 'type' in params:
+            if self._check_aa(): return
             if 'transient' in params and params['transient'][0].lower().strip() == 'no' and ('name' not in params or len(params['name'][0])==0):
                 print 'A new persistent station requires a name!'
                 return
             self._get_new_station(id=params['id'][0], type=params['type'][0].lower().strip(), numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation, transient=params['transient'][0].lower().strip() if 'transient' in params else 'yes', name=params['name'][0] if 'name' in params else transientStationName)
         elif parsedPath.path == '/get_new_station_by_search' and 'type' in params and ('title' in params or 'artist' in params):
+            if self._check_aa(): return
             if 'transient' in params and params['transient'][0].lower().strip() == 'no' and ('name' not in params or len(params['name'][0])==0):
                 print 'A new persistent station requires a name!'
                 return
@@ -80,30 +88,48 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             print 'Unknown command \'%s\' or missing required parameter!' % parsedPath.path
         return
 
-    def _get_song(self, id):
-        info = api.get_track_info(store_track_id=id)
-        print 'Streaming song with id \'%s\': %s - %s' % (id, info['artist'], info['title'])
-        printDebug(pprint.pformat(info))
-        url = api.get_stream_url(song_id=info['storeId'], device_id=config['device_id'])
-        printDebug(url)
+    def _check_aa(self):
+        if config['disable_all_access']:
+            print ('This functionality requires an All Access subscription!')
+        return config['disable_all_access']
 
-        tags = eyed3.id3.Tag()
-        if 'artist' in info: tags.artist = info['artist']
-        if 'album' in info: tags.album = info['album']
-        if 'title' in info: tags.title = info['title']
-        if 'trackNumber' in info: tags.track_num = info['trackNumber']
-        if 'discNumber' in info: tags.disk_num = info['discNumber']
-        if 'genre' in info: tags.genre = eyed3.id3.Genre(info['genre'])
-        if 'albumArtRef' in info:
-            albumArt = opener.open(info['albumArtRef'][0]['url']).read()
-            tags.images.set(3, albumArt, "image/jpeg")
-        # weird hack: write the id3 tag on a temporary file and reload it (no way to render it on memory...)
-        tempFile = tempfile.NamedTemporaryFile(delete=False)
-        tags.save(tempFile.name)
-        tagsBin = tempFile.read()
-        tempFile.close()
-        os.unlink(tempFile.name)
-        self.wfile.write(tagsBin)
+    def _get_song(self, id):
+        if config['disable_all_access']:
+            info = None
+            # a not so nice trick: we can't use the All Access 'get_track_info' method so we have to download the complete list of all the tracks in collection to get the information about this specific track
+            allSongs = api.get_all_songs()
+            for song in allSongs:
+                if 'nid' in song and song['nid'] == id:
+                    info = song.copy()
+                    break
+            allSongs = None
+        else:
+            info = api.get_track_info(store_track_id=id)
+        if info is None:
+            print 'Streaming song with id \'%s\'' % id
+        else:
+            print 'Streaming song with id \'%s\': %s - %s' % (id, info['artist'], info['title'])
+            printDebug(pprint.pformat(info))
+            tags = eyed3.id3.Tag()
+            if 'artist' in info: tags.artist = info['artist']
+            if 'album' in info: tags.album = info['album']
+            if 'title' in info: tags.title = info['title']
+            if 'trackNumber' in info: tags.track_num = info['trackNumber']
+            if 'discNumber' in info: tags.disk_num = info['discNumber']
+            if 'genre' in info: tags.genre = eyed3.id3.Genre(info['genre'])
+            if 'albumArtRef' in info:
+                albumArt = opener.open(info['albumArtRef'][0]['url']).read()
+                tags.images.set(3, albumArt, "image/jpeg")
+            # weird hack: write the id3 tag on a temporary file and reload it (no way to render it on memory...)
+            tempFile = tempfile.NamedTemporaryFile(delete=False)
+            tags.save(tempFile.name)
+            tagsBin = tempFile.read()
+            tempFile.close()
+            os.unlink(tempFile.name)
+            self.wfile.write(tagsBin)
+
+        url = api.get_stream_url(song_id=id, device_id=config['device_id'])
+        printDebug(url)
 
         mp3 = opener.open(url)
         block = mp3.read(downloadBlockSize)
@@ -338,6 +364,7 @@ def getOptions(filename):
     parser.add_argument('-d', '--device_id', help='the ID of a registered Android device [required]')
     parser.add_argument('-H', '--host', help='host in the generated URLs [default: autodetected local ip address]')
     parser.add_argument('-P', '--port', type=int, help='default TCP port to use [default: 9999]')
+    parser.add_argument('-a', '--disable_all_access', default=False, action='store_true', help='disable All Access functionalities')
     parser.add_argument('-L', '--list_devices', default=False, action='store_true', help='list the registered devices')
     parser.add_argument('-D', '--debug', default=False, action='store_true', help='enable debug messages')
 
@@ -352,7 +379,7 @@ def getOptions(filename):
             config.readfp(fp)
     configValues = dict(config.items('dummy'))
 
-    # defaults
+    # some defaults
     if 'host' not in configValues: configValues['host']='**auto**'
     if 'port' not in configValues: configValues['port']='9999'
     
@@ -403,7 +430,7 @@ if __name__ == '__main__':
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.7'
+    programVersion = '0.7.5'
     configFilename = 'gmusicproxy.cfg'
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
