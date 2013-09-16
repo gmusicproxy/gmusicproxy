@@ -8,7 +8,7 @@ License: **GPL v3**
 
 
 ## About
-This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and M3U playlists (e.g., [MPD server][1], [VLC][2], ...). 
+This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and M3U playlists (e.g., [MPD server][1], [VLC][2], ...). It can work also with a free account without All Access extras.
 
 Google has released a nice music service and now it is even more interesting with the All Access option. The Google-way to listen your collection and the stations is by means of Android devices or any web browser. If you want to use your TVs or HiFi audio systems, the main tool is the Chromecast key. I can't buy one (at the moment it is not available in my country) and it looks a bit closed. Even more I already got a music-system based on a PC connected to my HiFi audio system: it is based on [MPD][1] and I would like to continue to use it.
 
@@ -25,7 +25,7 @@ This is not supported nor endorsed by Google. It's aim is the abuse of the servi
 
 ## Setup
 ### Requirements
-- a Google Play Music account with All Access subscription (some functionalities could work even with a free account)
+- a Google Play Music account with All Access subscription (some functionalities continues to work even with a free account)
 - a **Python** 2.x interpreter
 - a snapshot of **gmusicapi** that support MobileClient and All Access (at the moment you have to use the `develop` branch)
 - few extra python libs: *netifaces*, *pyxdg*, *eyed3*
@@ -56,6 +56,7 @@ Here a list of the supported option on the command-line:
 - `--host`: host in the generated URLs [default: autodetected local ip address]
 - `--port`: default TCP port to use [default: 9999]
 - `--config`: specific configuration file to use
+- `--disable_all_access`: disable All Access functionalities
 - `--list_devices`: list the registered devices
 - `--debug`: enable debug messages
 
@@ -171,7 +172,6 @@ Feel free to open [bug reports][4] (complete of verbose output produced with opt
 - It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
 - The stations by genre are missing at the moment: to ask about this to Simon.
 - The correct MIME-type of the MP3 file as well as of the M3U list are not reported in the HTTP replies: to fix.
-- Isolate the functionalities that can work without an All Access subscription and add a specific configuration paramenter: to do.
 
 ### Limitations
 The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
