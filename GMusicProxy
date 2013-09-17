@@ -50,7 +50,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         elif parsedPath.path == '/get_all_playlists':
             self.send_response(200)
             self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() ==             self.end_headers()
+            self.send_header('Content-disposition', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
+            self.end_headers()
             self._get_all_playlists(format=params['format'][0] if 'format' in params else 'm3u', separator=params['separator'][0] if 'separator' in params else '|', onlyUrl=params['only_url'][0] if 'only_url' in params else 'no')
         elif parsedPath.path == '/get_station' and 'id' in params:
             self.send_response(200)
