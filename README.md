@@ -44,7 +44,7 @@ This is not supported nor endorsed by Google. It's aim is the abuse of the servi
 ## Usage 
 With the service running on any computer on the LAN, it can be used by any other of the same LAN. 
 
-To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are are using the 2-factor authentication, you have to create a password-specific password to use with this program. Another required information is the device ID of an Android device: you can discover the one of your devices using the option `--list_devices` on the command-line.
+To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are are using the 2-factor authentication, you have to create a password-specific password to use with this program. Another required information is the device ID of an Android device: you can discover the one of your devices using the option `--list-devices` on the command-line.
 
 You can provide such necessary information, as well as other options, on the command-line of the program or using a configuration file
 
@@ -52,19 +52,19 @@ You can provide such necessary information, as well as other options, on the com
 Here a list of the supported option on the command-line:
 - `--email`: email address of the Google account [required]
 - `--password`: password of the Google account [required]
-- `--device_id`: the ID of a registered Android device [required]
+- `--device-id`: the ID of a registered Android device [required]
 - `--host`: host in the generated URLs [default: autodetected local ip address]
 - `--port`: default TCP port to use [default: 9999]
 - `--config`: specific configuration file to use
-- `--disable_all_access`: disable All Access functionalities
-- `--list_devices`: list the registered devices
+- `--disable-all-access`: disable All Access functionalities
+- `--list-devices`: list the registered devices
 - `--debug`: enable debug messages
 
 ### Config file
 All the command-line options can be specified in a configuration file. A configuration with the strictly required options could look like this:
 `email = my.email@google.com
 password = my-secret-password
-device_id = 54bbd32a309a34ef`
+device-id = 54bbd32a309a34ef`
 When the proxy is launched it searches for a file named `gmusicproxy.cfg` on the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using option `--config`.
 
 ### URL-based interface
