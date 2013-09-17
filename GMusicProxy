@@ -361,11 +361,11 @@ def getOptions(filename):
     parser.add_argument('-c', '--config', type=file, help='specific configuration file to use')
     parser.add_argument('-e', '--email', help='email address of the Google account [required]')
     parser.add_argument('-p', '--password', help='password of the Google account (or an application-specific one if two-factor authentication is enabled) [required]')
-    parser.add_argument('-d', '--device_id', help='the ID of a registered Android device [required]')
+    parser.add_argument('-d', '--device-id', help='the ID of a registered Android device [required]')
     parser.add_argument('-H', '--host', help='host in the generated URLs [default: autodetected local ip address]')
     parser.add_argument('-P', '--port', type=int, help='default TCP port to use [default: 9999]')
-    parser.add_argument('-a', '--disable_all_access', default=False, action='store_true', help='disable All Access functionalities')
-    parser.add_argument('-L', '--list_devices', default=False, action='store_true', help='list the registered devices')
+    parser.add_argument('-a', '--disable-all-access', default=False, action='store_true', help='disable All Access functionalities')
+    parser.add_argument('-L', '--list-devices', default=False, action='store_true', help='list the registered devices')
     parser.add_argument('-D', '--debug', default=False, action='store_true', help='enable debug messages')
 
     config = ConfigParser.SafeConfigParser()
@@ -378,6 +378,11 @@ def getOptions(filename):
             fp = StringIO.StringIO('[dummy]\n' + open(path, 'r').read())
             config.readfp(fp)
     configValues = dict(config.items('dummy'))
+
+    # adjust some names in order to make work configparser with argparse
+    if 'device-id' in configValues: configValues['device_id'] = configValues.pop('device-id')
+    if 'list-devices' in configValues: configValues['list_devices'] = configValues.pop('list-devices')
+    if 'disable-all-access' in configValues: configValues['disable_all_access'] = configValues.pop('disable-all-access')
 
     # some defaults
     if 'host' not in configValues: configValues['host']='**auto**'
@@ -403,7 +408,7 @@ def listDevices(email, password):
     else:
         for d in devices:
             if d['type'] == 'PHONE':
-                print '- %s (%s - %s) --> device_id=%s' % (d['name'], d['manufacturer'], d['model'], d['id'].replace('0x',''))
+                print '- %s (%s - %s) --> device-id=%s' % (d['name'], d['manufacturer'], d['model'], d['id'].replace('0x',''))
         sys.exit()
 
 def loginGM(email, password):
@@ -449,7 +454,7 @@ if __name__ == '__main__':
         listDevices(config['email'], config['password'])
 
     if config['device_id'] is None or len(config['device_id']) == 0:
-        sys.exit('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list_devices=true\' to auto-discover the IDs.')
+        sys.exit('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list-devices=true\' to auto-discover the IDs.')
 
     api = loginGM(config['email'], config['password'])
 
