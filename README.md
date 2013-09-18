@@ -42,9 +42,9 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
   ```
 
 ## Usage 
-With the service running on a computer on the LAN, it can be used by any others of the same LAN. 
+With the service running on a computer on the LAN, it can be used by any others of the same network.
 
-To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create a password-specific password to be used with this program. Another required information is the device ID of an Android device registered in your account: you can discover the one of your devices using the option `--list-devices` on the command-line.
+To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create an application-specific password to be used with this program. Another required information is the device ID of an Android device registered in your account: you can discover the one of your devices using the option `--list-devices` on the command-line.
 
 You can provide such necessary information, as well as other options, on the command-line of the program or using a configuration file.
 
@@ -75,7 +75,7 @@ The only way to use the service is to query the proxy by means of properly forma
 
 Consider that any song, album, artist, playlist or station got an unique ID in Google Music API but there are many methods to discover them. 
 
-Here a list of the supported requests:
+Here a list of the supported requests (with some restricted by the availability a All Access subscription):
 - `/get_collection`: reports an M3U playlist with all the songs in your personal collection.
 - `/search_id`: reports the unique ID as result of a search for an artist, a song or an album.
   Allowed parameters:
@@ -83,14 +83,14 @@ Here a list of the supported requests:
      - `title`: a string to search in the title of the album or of the song
      - `artist`: a string to search in the name of the artist in any kind of search
      - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
-- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song).
+- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song) [requires A.A.].
   Allowed parameters:
      - `type`: search for `artist`, `album` or `song` [required]
      - `title`: a string to search in the title of the album or of the song
      - `artist`: a string to search in the name of the artist in any kind of search
      - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
      - `num_tracks`: the number of top songs to return in a search for artist [default: 20]
-- `/get_all_stations`: reports a list of registered stations as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one station per line).
+- `/get_all_stations`: reports a list of registered stations as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one station per line)  [requires A.A.].
   Allowed parameters:
      - `type`: `m3u` for an M3U list or `text` for a plain-text list with lines like `Name of the Station|URL to an M3U playlist` [default: `m3u`]
      - `separator`: a separator for the plain-text lists [default: `|`]
@@ -98,7 +98,7 @@ Here a list of the supported requests:
      - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
 - `/get_all_playlists`: reports the playlists registered in the account as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one playlist per line).
   The allowed parameters are the same as `/get_all_stations`.
-- `/get_new_station_by_search`: reports as M3U playlist the content of a new (transient or permanent) station created on the result of a search for artist/album/song.
+- `/get_new_station_by_search`: reports as M3U playlist the content of a new (transient or permanent) station created on the result of a search for artist/album/song [requires A.A.].
   Allowed parameters:
      - `type`: search for `artist`, `album` or `song` [required]
      - `title`: a string to search in the title of the album or of the song
@@ -107,14 +107,14 @@ Here a list of the supported requests:
      - `num_tracks`: the number of songs to extract from the new station [default: 20]
      - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
      - `name`: the name of the persistent station to create [required if `transient` is `no`]
-- `/get_new_station_by_id`: reports as M3U playlist the content of a new (transient or permanent) station created on a specified id of an artist/album/song.
+- `/get_new_station_by_id`: reports as M3U playlist the content of a new (transient or permanent) station created on a specified id of an artist/album/song [requires A.A.].
   Allowed parameters:
      - `id`: the unique identifier of the artist/album/song [required]
      - `type`: the type of id specified among `artist`, `album` and `song` [required]
      - `num_tracks`: the number of songs to extract from the new station [default: 20]
      - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
      - `name`: the name of the persistent station to create [required if `transient` is `no`]
-- `/get_station`: reports an M3U playlist of tracks associated to the given station.
+- `/get_station`: reports an M3U playlist of tracks associated to the given station  [requires A.A.].
   Allowed parameters:
      - `id`: the unique identifier of the station [required]
      - `num_tracks`: the number of tracks to extract [default: 20]
@@ -127,7 +127,7 @@ Here a list of the supported requests:
 - `/get_song`: streams the content of the specified song as a standard MP3 file with IDv3 tag.
   Allowed parameters:
      - `id`: the unique identifier of the song [required]
-- `/get_top_tracks_artist`: reports an M3U playlist with the top songs of a specified artist.
+- `/get_top_tracks_artist`: reports an M3U playlist with the top songs of a specified artist [requires A.A.].
   Allowed parameters:
      - `id`: the unique identifier of the artist [required]
      - `type`: the type of id specified among `artist`, `album` and `song` [required]
