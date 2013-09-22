@@ -481,7 +481,7 @@ if __name__ == '__main__':
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.7.8'
+    programVersion = '0.8'
     configFilename = 'gmusicproxy.cfg'
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
