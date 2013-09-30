@@ -174,6 +174,8 @@ Feel free to open [bug reports][4] (complete of verbose output produced with opt
 ### Known problems / Ideas
 - It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
 - The stations by genre are missing at the moment: to ask about this to Simon.
+- At the moment if you redirect the stdout/stderror of gmusicproxy on a file or on a pipeline, Python converts all the output strings using an encoding that is not able to manage non-ascii characters (òèàùì...): we need a more robust info/debug output system.
+- We need an option to daemonize gmusicproxy.
 
 ### Limitations
 The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
