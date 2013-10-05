@@ -21,7 +21,7 @@
 #
 
 import BaseHTTPServer, socket, urlparse, urllib2
-import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging
+import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon
 import gmusicapi, eyed3.id3
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -189,10 +189,10 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         for station in stations:
             if 'id' in station:
                 if format.lower().strip() == 'text':
-                    line = ('%shttp://%s:%s/get_station?id=%s' % ('%s%s' % (station['name'], separator) if ( 'name' in station and onlyUrl.lower().strip() != 'yes' ) else '', config['host'], config['port'], station['id'])).encode('utf-8')
+                    line = '%shttp://%s:%s/get_station?id=%s' % ('%s%s' % (station['name'], separator) if ( 'name' in station and onlyUrl.lower().strip() != 'yes' ) else '', config['host'], config['port'], station['id'])
                 else:
-                    line = ('#EXTINF:-1,%s\nhttp://%s:%s/get_station?id=%s' % (station['name'] if 'name' in station else '', config['host'], config['port'], station['id'])).encode('utf-8')
-                self.wfile.write('%s\n' % line)
+                    line = '#EXTINF:-1,%s\nhttp://%s:%s/get_station?id=%s' % (station['name'] if 'name' in station else '', config['host'], config['port'], station['id'])
+                self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
     def _get_all_playlists(self, format, separator, onlyUrl):
@@ -204,10 +204,10 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         for playlist in playlists:
             if 'id' in playlist:
                 if format.lower().strip() == 'text':
-                    line = ('%shttp://%s:%s/get_playlist?id=%s' % ('%s%s' % (playlist['name'], separator) if ( 'name' in playlist and onlyUrl.lower().strip() != 'yes' ) else '', config['host'], config['port'], playlist['id'])).encode('utf-8')
+                    line = '%shttp://%s:%s/get_playlist?id=%s' % ('%s%s' % (playlist['name'], separator) if ( 'name' in playlist and onlyUrl.lower().strip() != 'yes' ) else '', config['host'], config['port'], playlist['id'])
                 else:
-                    line = ('#EXTINF:-1,%s\nhttp://%s:%s/get_playlist?id=%s' % (playlist['name'] if 'name' in playlist else '', config['host'], config['port'], playlist['id'])).encode('utf-8')
-                self.wfile.write('%s\n' % line)
+                    line = '#EXTINF:-1,%s\nhttp://%s:%s/get_playlist?id=%s' % (playlist['name'] if 'name' in playlist else '', config['host'], config['port'], playlist['id'])
+                self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
     def _get_station(self, id, numTracks):
@@ -218,8 +218,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
-                line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
-                self.wfile.write('%s\n' % line)
+                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
     def _get_new_station(self, id, type, numTracks, transient, name):
@@ -235,8 +235,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
-                line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
-                self.wfile.write('%s\n' % line)
+                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
     def _get_playlist(self, id):
@@ -251,8 +251,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if 'id' in playlist and playlist['id'] == id:
                     for track in playlist['tracks']:
                         if 'trackId' in track and 'track' in track:
-                            line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['track']['durationMillis'])/1000) if 'durationMillis' in track['track'] else -1, '%s - ' % track['track']['artist'] if 'artist' in track['track'] else '', track['track']['title'] if 'title' in track['track'] else '', config['host'], config['port'], track['trackId'])).encode('utf-8')
-                            self.wfile.write('%s\n' % line)
+                            line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['track']['durationMillis'])/1000) if 'durationMillis' in track['track'] else -1, '%s - ' % track['track']['artist'] if 'artist' in track['track'] else '', track['track']['title'] if 'title' in track['track'] else '', config['host'], config['port'], track['trackId'])
+                            self.wfile.write(('%s\n' % line).encode('utf-8'))
                             logger.debug(line)
                     found=True
             if not found: logger.warning("Playlist not found!")
@@ -266,8 +266,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if 'tracks' in album:
             for track in album['tracks']:
                 if 'nid' in track:
-                    line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
-                    self.wfile.write('%s\n' % line)
+                    line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                    self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
 
     def _get_top_tracks_artist(self, id, numTracks):
@@ -279,8 +279,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if 'topTracks' in artist:
             for track in artist['topTracks']:
                 if 'nid' in track:
-                    line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
-                    self.wfile.write('%s\n' % line)
+                    line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                    self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
 
     def _get_collection(self):
@@ -294,8 +294,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for track in songs:
             if 'nid' in track:
-                line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
-                self.wfile.write('%s\n' % line)
+                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)      
 
     def _search(self, type, query_title, query_artist, exact):
@@ -364,10 +364,6 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             return
 
-    def log_request(code=0, size=0):
-        if config['debug']:
-            BaseHTTPServer.BaseHTTPRequestHandler.log_request(code, size)
-
     def handle_one_request(self):
         try:
             BaseHTTPServer.BaseHTTPRequestHandler.handle_one_request(self)
@@ -410,7 +406,8 @@ def getOptions(filename):
     parser.add_argument('-a', '--disable-all-access', default=False, action='store_true', help='disable All Access functionalities')
     parser.add_argument('-L', '--list-devices', default=False, action='store_true', help='list the registered devices')
     parser.add_argument('-D', '--debug', default=False, action='store_true', help='enable debug messages')
-    parser.add_argument('-l', '--log', help='file to append log messages')
+    parser.add_argument('-l', '--log', help='log file')
+    parser.add_argument('-f', '--daemon', default=False, action='store_true', help='daemonize the program')
 
     config = ConfigParser.SafeConfigParser()
     args = parser.parse_args()
@@ -483,7 +480,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9'
+    programVersion = '0.9.1'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
@@ -509,11 +506,17 @@ if __name__ == '__main__':
         logger.addHandler(fileHandler)
     if config['debug']:
         logger.setLevel(logging.DEBUG)
-        consoleHandler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
         if fileHandler:
             fileHandler.setFormatter(logging.Formatter('[%(levelname)s] (%(module)s:%(lineno)s): %(message)s'))
 
     logger.info(u'%s %s (© %s)\n', programDescription, programVersion, programMainAuthor)
+
+    ## preliminar setup for the daemonaization
+    if config['daemon']:
+        contextDaemon = daemon.DaemonContext(files_preserve=[])
+        if fileHandler:
+            contextDaemon.files_preserve.append(fileHandler.stream)
+        consoleHandler.setLevel(logging.ERROR)
 
     safeConfig = config.copy()
     safeConfig['password'] = '***OMITTED***'   # for debug dump
@@ -542,5 +545,11 @@ if __name__ == '__main__':
 
     server = BaseHTTPServer.HTTPServer(('0.0.0.0', config['port']), GetHandler)
     logger.info('Listening on port %s...', config['port'])
-    server.serve_forever()
+
+    if config['daemon']:
+        contextDaemon.files_preserve.append(server.fileno())
+        with contextDaemon:
+            server.serve_forever()
+    else:
+        server.serve_forever()
 
