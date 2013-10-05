@@ -147,7 +147,7 @@ Here a list of the supported requests (with some restricted by the availability 
 - You can also request a fresh list of songs from a station and add them to the current playlist.
 
   ```bash
-  mpd clear
+  mpc clear
   curl -s 'http://localhost:9999/get_new_station_by_search?type=artist&artist=Queen&num_tracks=100' | 
     grep -v ^# | while read url; do mpc add "$url"; done
   mpc play
@@ -157,12 +157,12 @@ Here a list of the supported requests (with some restricted by the availability 
 - You can listen the generated playlist using VLC from command-line.
 
   ```bash
-  curl -s 'http://localhost:9999/get_by_search?type=album&artist=Rolling%20Stones&title=tattoo&exact=no' | vlc -
+  vlc 'http://localhost:9999/get_by_search?type=album&artist=Rolling%20Stones&title=tattoo&exact=no'
   ```
 - You can automatically choose at random one registered station and then extract 50 fresh songs from it.
 
   ```bash
-  curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes&num_tracks=50' | sort -R | head -n1 | vlc -
+  curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes' | sort -R | head -n1 | vlc -
   ```
 
 
@@ -174,6 +174,8 @@ Feel free to open [bug reports][4] (complete of verbose output produced with opt
 ### Known problems / Ideas
 - It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
 - The stations by genre are missing at the moment: to ask about this to Simon.
+- At the moment if you redirect the stdout/stderror of gmusicproxy on a file or on a pipeline, Python converts all the output strings using an encoding that is not able to manage non-ascii characters (òèàùì...): we need a more robust info/debug output system.
+- We need an option to daemonize gmusicproxy.
 
 ### Limitations
 The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
