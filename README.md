@@ -28,11 +28,17 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
 - a **Python** 2.x interpreter
 - a snapshot of **gmusicapi** that supports MobileClient and All Access (at the moment we need the `develop` branch)
-- few extra python libs: *netifaces*, *pyxdg*, *eyed3*
+- few extra python libs: *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
 - The easiest way is to use the automagic `pip` to install the proxy with all the dependencies from PyPI and GitHub repositories:
   `pip install https://github.com/diraimondo/gmusicproxy/tarball/master`
+  or you can install it from a local copy of the repository:
+
+  ```bash
+  git clone https://github.com/diraimondo/gmusicproxy.git
+  pip install .
+  ```
 
 - The previous method could require the use of `sudo` or the rights of `root` user. If you don't want to mess your system, the right way it to use `virtualenv`:
 
