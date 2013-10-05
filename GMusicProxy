@@ -21,18 +21,15 @@
 #
 
 import BaseHTTPServer, socket, urlparse, urllib2
-import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO
+import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging
 import gmusicapi, eyed3.id3
-
-def printDebug(msg, configDebugOverride=None):
-    if (configDebugOverride is not None and configDebugOverride) or (config is not None and 'debug' in config and config['debug']): print >>sys.stderr, msg
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
+        logger.debug('request path: %s', self.path)
         parsedPath = urlparse.urlparse(self.path)
         params=urlparse.parse_qs(parsedPath.query)
-        printDebug(params)
 
         if parsedPath.path == '/get_song' and 'id' in params:
             self.send_response(200)
@@ -113,7 +110,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             if self._check_aa(): return
             if 'transient' in params and params['transient'][0].lower().strip() == 'no' and ('name' not in params or len(params['name'][0])==0):
-                print 'A new persistent station requires a name!'
+                logger.warning('A new persistent station requires a name!')
                 return
             self._get_new_station(id=params['id'][0], type=params['type'][0].lower().strip(), numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation, transient=params['transient'][0].lower().strip() if 'transient' in params else 'yes', name=params['name'][0] if 'name' in params else transientStationName)
         elif parsedPath.path == '/get_new_station_by_search' and 'type' in params and ('title' in params or 'artist' in params):
@@ -123,7 +120,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             if self._check_aa(): return
             if 'transient' in params and params['transient'][0].lower().strip() == 'no' and ('name' not in params or len(params['name'][0])==0):
-                print 'A new persistent station requires a name!'
+                logger.warning('A new persistent station requires a name!')
                 return
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no')
             if result and len(result)>0:
@@ -131,12 +128,12 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             self.send_response(500)
             self.end_headers()
-            print 'Unknown command \'%s\' or missing required parameter!' % parsedPath.path
+            logger.warning('Unknown command \'%s\' or missing required parameter!', parsedPath.path)
         return
 
     def _check_aa(self):
         if config['disable_all_access']:
-            print ('This functionality requires an All Access subscription!')
+            logger.warning('This functionality requires an All Access subscription!')
         return config['disable_all_access']
 
     def _get_song(self, id):
@@ -152,10 +149,10 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             info = api.get_track_info(store_track_id=id)
         if info is None:
-            print 'Streaming song with id \'%s\'' % id
+            logger.info('Streaming song with id \'%s\'', id)
         else:
-            print 'Streaming song with id \'%s\': %s - %s' % (id, info['artist'], info['title'])
-            printDebug(pprint.pformat(info))
+            logger.info('Streaming song with id \'%s\': %s - %s', id, info['artist'], info['title'])
+            logger.debug(pprint.pformat(info))
             tags = eyed3.id3.Tag()
             if 'artist' in info: tags.artist = info['artist']
             if 'album' in info: tags.album = info['album']
@@ -175,7 +172,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.wfile.write(tagsBin)
 
         url = api.get_stream_url(song_id=id, device_id=config['device_id'])
-        printDebug(url)
+        logger.debug('streaming url: %s', url)
 
         mp3 = opener.open(url)
         block = mp3.read(downloadBlockSize)
@@ -184,11 +181,11 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             block = mp3.read(downloadBlockSize)
 
     def _get_all_stations(self, format, separator, onlyUrl):
-        print 'Getting all stations as plain-text list...' if format == 'text' else 'Getting all stations as M3U list...'
+        logger.info('Getting all stations as plain-text list...' if format == 'text' else 'Getting all stations as M3U list...')
         stations = api.get_all_stations()
-        printDebug(pprint.pformat(stations))
+        logger.debug(pprint.pformat(stations))
         if format.lower().strip() != 'text': self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
+        logger.debug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
         for station in stations:
             if 'id' in station:
                 if format.lower().strip() == 'text':
@@ -196,14 +193,14 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 else:
                     line = ('#EXTINF:-1,%s\nhttp://%s:%s/get_station?id=%s' % (station['name'] if 'name' in station else '', config['host'], config['port'], station['id'])).encode('utf-8')
                 self.wfile.write('%s\n' % line)
-                printDebug(line)
+                logger.debug(line)
 
     def _get_all_playlists(self, format, separator, onlyUrl):
-        print 'Getting all playlists as plain-text list...' if format.lower().strip() == 'text' else 'Getting all playlists as M3U list...'
+        logger.info('Getting all playlists as plain-text list...' if format.lower().strip() == 'text' else 'Getting all playlists as M3U list...')
         playlists = api.get_all_playlists()
-        printDebug(pprint.pformat(playlists))
+        logger.debug(pprint.pformat(playlists))
         if format.lower().strip() != 'text': self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
+        logger.debug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
         for playlist in playlists:
             if 'id' in playlist:
                 if format.lower().strip() == 'text':
@@ -211,19 +208,19 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 else:
                     line = ('#EXTINF:-1,%s\nhttp://%s:%s/get_playlist?id=%s' % (playlist['name'] if 'name' in playlist else '', config['host'], config['port'], playlist['id'])).encode('utf-8')
                 self.wfile.write('%s\n' % line)
-                printDebug(line)
+                logger.debug(line)
 
     def _get_station(self, id, numTracks):
         station = api.get_station_tracks(station_id=id, num_tracks=numTracks)
-        print 'Getting %s tracks from station with id \'%s\'' % (numTracks, id)
-        printDebug(pprint.pformat(station))
+        logger.info('Getting %s tracks from station with id \'%s\'', (numTracks, id))
+        logger.debug(pprint.pformat(station))
         self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:\n#EXTM3U')
+        logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
                 line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
                 self.wfile.write('%s\n' % line)
-                printDebug(line)
+                logger.debug(line)
 
     def _get_new_station(self, id, type, numTracks, transient, name):
         stationId = api.create_station(name=name, track_id=id if type == 'song' else None, artist_id=id if type == 'artist' else None, album_id=id if type == 'album' else None)  ## by genre: TO DO
@@ -232,23 +229,23 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if transient != 'no': 
             api.delete_stations(stationId)
             transientStationIds.remove(stationId)
-        print 'Getting %s tracks from a new %s station based on %s id \'%s\'' % (numTracks, 'transient' if transient != 'no' else 'persistent', type, id)
-        printDebug(pprint.pformat(station))
+        logger.info('Getting %s tracks from a new %s station based on %s id \'%s\'' % (numTracks, 'transient' if transient != 'no' else 'persistent', type, id))
+        logger.debug(pprint.pformat(station))
         self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:\n#EXTM3U')
+        logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
                 line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
                 self.wfile.write('%s\n' % line)
-                printDebug(line)
+                logger.debug(line)
 
     def _get_playlist(self, id):
-            print 'Getting tracks from playlist with id \'%s\'' % id
+            logger.info('Getting tracks from playlist with id \'%s\'', id)
             # we have to download the content of all the playlists (actual API limitation)
             playlistsWithContents = api.get_all_playlist_contents()
-            printDebug(pprint.pformat(playlistsWithContents))
+            logger.debug(pprint.pformat(playlistsWithContents))
             self.wfile.write('#EXTM3U\n')
-            printDebug('generated playlist:\n#EXTM3U')
+            logger.debug('generated playlist:\n#EXTM3U')
             found=False
             for playlist in playlistsWithContents:
                 if 'id' in playlist and playlist['id'] == id:
@@ -256,114 +253,114 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         if 'trackId' in track and 'track' in track:
                             line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['track']['durationMillis'])/1000) if 'durationMillis' in track['track'] else -1, '%s - ' % track['track']['artist'] if 'artist' in track['track'] else '', track['track']['title'] if 'title' in track['track'] else '', config['host'], config['port'], track['trackId'])).encode('utf-8')
                             self.wfile.write('%s\n' % line)
-                            printDebug(line)
+                            logger.debug(line)
                     found=True
-            if not found: print ("Playlist not found!")
+            if not found: logger.warning("Playlist not found!")
 
     def _get_album(self, id):
         album = api.get_album_info(albumid=id, include_tracks=True)
-        print 'Getting the tracks of the album with id \'%s\': %s - %s' % (id, album['name'], album['artist'])
-        printDebug(pprint.pformat(album))
+        logger.info('Getting the tracks of the album with id \'%s\': %s - %s', id, album['name'], album['artist'])
+        logger.debug(pprint.pformat(album))
         self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:\n#EXTM3U')
+        logger.debug('generated playlist:\n#EXTM3U')
         if 'tracks' in album:
             for track in album['tracks']:
                 if 'nid' in track:
                     line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
                     self.wfile.write('%s\n' % line)
-                    printDebug(line)
+                    logger.debug(line)
 
     def _get_top_tracks_artist(self, id, numTracks):
         artist = api.get_artist_info(artist_id=id, include_albums=False, max_top_tracks=numTracks, max_rel_artist=0)
-        print 'Getting %s top tracks of the artist with id \'%s\': %s' % (numTracks, id, artist['name'])
-        printDebug(pprint.pformat(artist))
+        logger.info('Getting %s top tracks of the artist with id \'%s\': %s', numTracks, id, artist['name'])
+        logger.debug(pprint.pformat(artist))
         self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:\n#EXTM3U')
+        logger.debug('generated playlist:\n#EXTM3U')
         if 'topTracks' in artist:
             for track in artist['topTracks']:
                 if 'nid' in track:
                     line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
                     self.wfile.write('%s\n' % line)
-                    printDebug(line)
+                    logger.debug(line)
 
     def _get_collection(self):
         songs = api.get_all_songs()
         if len(songs) == 0:
-            print "No songs in your collection!?!"
+            logger.warning("No songs in your collection!?!")
             return
-        print 'Getting your collection: %s tracks' % len(songs)
-        printDebug(pprint.pformat(songs))
+        logger.info('Getting your collection: %s tracks', len(songs))
+        logger.debug(pprint.pformat(songs))
         self.wfile.write('#EXTM3U\n')
-        printDebug('generated playlist:\n#EXTM3U')
+        logger.debug('generated playlist:\n#EXTM3U')
         for track in songs:
             if 'nid' in track:
                 line = ('#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])).encode('utf-8')
                 self.wfile.write('%s\n' % line)
-                printDebug(line)      
+                logger.debug(line)      
 
     def _search(self, type, query_title, query_artist, exact):
         if type is None or type not in ['artist', 'song', 'album']:
-            print 'The type of search has to be specified: artist, song or album!'
+            logger.warning('The type of search has to be specified: artist, song or album!')
             return
-        print 'Searching for %s with query: %s %s' % (type, query_artist, query_title)
+        logger.info('Searching for %s with query: %s %s', type, query_artist, query_title)
         match = None
         if type == 'artist':
             results = api.search_all_access(query_artist)
-            printDebug(pprint.pformat(results))
+            logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'artist_hits' in results and len(results['artist_hits']) > 0:
-                printDebug('I\'m feeling lucky: lets select the first artist in list!')
+                logger.debug('I\'m feeling lucky: lets select the first artist in list!')
                 match = results['artist_hits'][0]
             else:
                 if 'artist_hits' in results:
                     for artist in results['artist_hits']:
                         if 'name' in artist['artist'] and artist['artist']['name'].lower().strip() == query_artist.lower().strip():
-                            printDebug('Found exact matching artist in list!')
+                            logger.debug('Found exact matching artist in list!')
                             match = artist
                             break
             if match and 'artist' in match and 'artistId' in match['artist']:
-                print 'Selected artist: %s (%s)' % (match['artist']['name'], match['artist']['artistId'])
-                printDebug(pprint.pformat(match))
+                logger.info('Selected artist: %s (%s)', match['artist']['name'], match['artist']['artistId'])
+                logger.debug(pprint.pformat(match))
                 return match['artist']['artistId']
             else:
-                print 'No matching found.'
+                logger.warning('No matching found.')
         elif type == 'song':
             results = api.search_all_access('%s %s' % (query_artist, query_title))
-            printDebug(pprint.pformat(results))
+            logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'song_hits' in results and len(results['song_hits']) > 0:
-                printDebug('I\'m feeling lucky: lets select the first song!')
+                logger.debug('I\'m feeling lucky: lets select the first song!')
                 match = results['song_hits'][0]
             else:
                 if 'song_hits' in results:
                     for song in results['song_hits']:
                         if 'title' in song['track'] and song['track']['title'].lower().strip() == query_title.lower().strip() and 'artist' in song['track'] and song['track']['artist'].lower().strip() == query_artist.lower().strip():
-                            printDebug('Found exact matching song!')
+                            logger.debug('Found exact matching song!')
                             match = song
                             break
             if match and 'track' in match and 'nid' in match['track']:
-                print 'Selected song: %s - %s (%s)' % (match['track']['artist'], match['track']['title'], match['track']['nid'])
-                printDebug(pprint.pformat(match))
+                logger.info('Selected song: %s - %s (%s)', match['track']['artist'], match['track']['title'], match['track']['nid'])
+                logger.debug(pprint.pformat(match))
                 return match['track']['nid']
             else:
-                print 'No matching found.'
+                logger.warning('No matching found.')
         elif type == 'album':
             results = api.search_all_access('%s %s' % (query_artist, query_title))
-            printDebug(pprint.pformat(results))
+            logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'album_hits' in results and len(results['album_hits']) > 0:
-                printDebug('I\'m feeling lucky: lets select the first album in list!')
+                logger.debug('I\'m feeling lucky: lets select the first album in list!')
                 match = results['album_hits'][0]
             else:
                 if 'album_hits' in results:
                     for album in results['album_hits']:
                         if 'name' in album['album'] and album['album']['name'].lower().strip() == query_title.lower().strip() and 'artist' in album['album'] and album['album']['artist'].lower().strip() == query_artist.lower().strip():
-                            printDebug('Found exact matching album in list!')
+                            logger.debug('Found exact matching album in list!')
                             match = album
                             break
             if match and 'album' in match and 'albumId' in match['album']:
-                print 'Selected album: %s - %s (%s)' % (match['album']['artist'], match['album']['name'], match['album']['albumId'])
-                printDebug(pprint.pformat(match))
+                logger.info('Selected album: %s - %s (%s)', match['album']['artist'], match['album']['name'], match['album']['albumId'])
+                logger.debug(pprint.pformat(match))
                 return match['album']['albumId']
             else:
-                print 'No matching found.'
+                logger.warning('No matching found.')
         else:
             return
 
@@ -376,11 +373,11 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             BaseHTTPServer.BaseHTTPRequestHandler.handle_one_request(self)
         except socket.error, e:
             if e[0] == errno.ECONNRESET:
-                printDebug('Detected connection reset.')
+                logger.warning('Detected connection reset.')
             elif e[0] == errno.EPIPE:
-                printDebug('Detected remote peer disconnected.')
+                logger.warning('Detected remote peer disconnected.')
             elif e[0] == 10053:
-                printDebug('An established connection was aborted by the software in your host machine.')
+                logger.warning('An established connection was aborted by the software in your host machine.')
             else:
                 raise
 
@@ -395,7 +392,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.rfile.close()
 
 def signalHandler(signal, frame):
-    print '\nShutting down the proxy...'
+    logger.info('Shutting down the proxy...')
     if server: server.socket.close()
     if len(transientStationIds) and api: api.delete_stations(transientStationIds)
     if api: api.logout()
@@ -413,6 +410,7 @@ def getOptions(filename):
     parser.add_argument('-a', '--disable-all-access', default=False, action='store_true', help='disable All Access functionalities')
     parser.add_argument('-L', '--list-devices', default=False, action='store_true', help='list the registered devices')
     parser.add_argument('-D', '--debug', default=False, action='store_true', help='enable debug messages')
+    parser.add_argument('-l', '--log', help='file to append log messages')
 
     config = ConfigParser.SafeConfigParser()
     args = parser.parse_args()
@@ -437,31 +435,34 @@ def getOptions(filename):
     parser.set_defaults(**configValues)
     args = parser.parse_args()
     config = vars(args)
-    safeConfig = config.copy()
-    safeConfig['password'] = '***OMITTED***'   # for debug dump
-    printDebug('configuration used:\n%s\n' % pprint.pformat(safeConfig), config['debug'])
     return config
 
 def listDevices(email, password):
     api = gmusicapi.Webclient(debug_logging=config['debug'])
+    if config['debug']:
+        api.logger = logger
     api.login(email, password)
     if not api.is_authenticated():
-       sys.exit('Sorry, those credentials weren\'t accepted.')
+       logger.error('Sorry, those credentials weren\'t accepted.')
+       sys.exit(1)
     devices = api.get_registered_devices()
     api.logout()
     if len(devices)==0:
-        sys.exit('No Android phone-like devices registered in your Google account.')
+        logger.warning('No Android phone-like devices registered in your Google account.')
     else:
         for d in devices:
             if d['type'] == 'PHONE':
-                print '- %s (%s - %s) --> device-id=%s' % (d['name'], d['manufacturer'], d['model'], d['id'].replace('0x',''))
+                logger.info('- %s (%s - %s) --> device-id=%s', d['name'], d['manufacturer'], d['model'], d['id'].replace('0x',''))
         sys.exit()
 
 def loginGM(email, password):
     api = gmusicapi.Mobileclient(debug_logging=config['debug'])
+    if config['debug']:
+        api.logger = logger
     api.login(email, password)
     if not api.is_authenticated():
-       sys.exit('Sorry, those credentials weren\'t accepted.')
+       logger.error('Sorry, those credentials weren\'t accepted.')
+       sys.exit(1)
     return api
 
 def autodetectLocalIP():
@@ -480,27 +481,54 @@ if __name__ == '__main__':
     defaultNumberTracksStation = 50
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
+    programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
     programVersion = '0.8'
-    configFilename = 'gmusicproxy.cfg'
+    configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
     config = dict()
 
-    print '%s %s (© %s)\n' % (programDescription, programVersion, programMainAuthor)
+    # remove previous root logging handler
+    logger = logging.getLogger()
+    map(logger.removeHandler, logger.handlers[:])
+
+    # initial setup of my logger
+    logger = logging.getLogger(programName)
+    logger.setLevel(logging.INFO)
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(consoleHandler)
 
     config = getOptions(configFilename)
 
-    if config['email'] is None or config['password'] is None or len(config['email']) == 0 or len(config['password']) == 0:
-        sys.exit('Please, specify the credentials of your Google account in the config file or on the command-line.')
+    # complete setup of the logger
+    fileHandler = None
+    if config['log']:
+        fileHandler = logging.FileHandler(config['log'], encoding='utf-8')
+        logger.addHandler(fileHandler)
+    if config['debug']:
+        logger.setLevel(logging.DEBUG)
+        consoleHandler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+        if fileHandler:
+            fileHandler.setFormatter(logging.Formatter('[%(levelname)s] (%(module)s:%(lineno)s): %(message)s'))
 
-    signal.signal(signal.SIGINT, signalHandler)
+    logger.info(u'%s %s (© %s)\n', programDescription, programVersion, programMainAuthor)
+
+    safeConfig = config.copy()
+    safeConfig['password'] = '***OMITTED***'   # for debug dump
+    logger.debug('configuration used:\n%s\n', pprint.pformat(safeConfig))
+
+    if config['email'] is None or config['password'] is None or len(config['email']) == 0 or len(config['password']) == 0:
+        logger.error('Please, specify the credentials of your Google account in the config file or on the command-line.')
+        sys.exit(1)
 
     if config['list_devices']:
         listDevices(config['email'], config['password'])
 
     if config['device_id'] is None or len(config['device_id']) == 0:
-        sys.exit('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list-devices=true\' to auto-discover the IDs.')
+        logger.error('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list-devices=true\' to auto-discover the IDs.')
+        sys.exit(1)
 
     api = loginGM(config['email'], config['password'])
 
@@ -510,7 +538,9 @@ if __name__ == '__main__':
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', '%s %s' % (programDescription, programVersion))]
 
+    signal.signal(signal.SIGINT, signalHandler)
+
     server = BaseHTTPServer.HTTPServer(('0.0.0.0', config['port']), GetHandler)
-    print 'Listening on port %s...' % config['port']
+    logger.info('Listening on port %s...', config['port'])
     server.serve_forever()
 
