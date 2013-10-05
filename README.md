@@ -147,7 +147,7 @@ Here a list of the supported requests (with some restricted by the availability 
 - You can also request a fresh list of songs from a station and add them to the current playlist.
 
   ```bash
-  mpd clear
+  mpc clear
   curl -s 'http://localhost:9999/get_new_station_by_search?type=artist&artist=Queen&num_tracks=100' | 
     grep -v ^# | while read url; do mpc add "$url"; done
   mpc play
@@ -157,12 +157,12 @@ Here a list of the supported requests (with some restricted by the availability 
 - You can listen the generated playlist using VLC from command-line.
 
   ```bash
-  curl -s 'http://localhost:9999/get_by_search?type=album&artist=Rolling%20Stones&title=tattoo&exact=no' | vlc -
+  vlc 'http://localhost:9999/get_by_search?type=album&artist=Rolling%20Stones&title=tattoo&exact=no'
   ```
 - You can automatically choose at random one registered station and then extract 50 fresh songs from it.
 
   ```bash
-  curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes&num_tracks=50' | sort -R | head -n1 | vlc -
+  curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes' | sort -R | head -n1 | vlc -
   ```
 
 
