@@ -3,6 +3,7 @@
 *"Let's stream Google Play Music using any music program"*
 
 © [Mario Di Raimondo](mario.diraimondo@gmail.com)
+
 web-site: [gmusicproxy.net][0]
 
 License: **GPL v3**
