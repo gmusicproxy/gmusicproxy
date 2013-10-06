@@ -56,6 +56,7 @@ You can provide such necessary information, as well as other options, on the com
 
 ### Command-line
 Here a list of the supported option on the command-line:
+
 - `--email`: email address of the Google account [required]
 - `--password`: password of the Google account [required]
 - `--device-id`: the ID of a registered Android device [required]
@@ -85,6 +86,7 @@ The only way to use the service is to query the proxy by means of properly forma
 Consider that any song, album, artist, playlist or station got an unique ID in Google Music API but there are many methods to discover them. 
 
 Here a list of the supported requests (with some restricted by the availability a All Access subscription):
+
 - `/get_collection`: reports an M3U playlist with all the songs in your personal collection.
 - `/search_id`: reports the unique ID as result of a search for an artist, a song or an album.
   Allowed parameters:
