@@ -3,9 +3,9 @@
 *"Let's stream Google Play Music using any music program"*
 
 © [Mario Di Raimondo](mario.diraimondo@gmail.com)
+web-site: [gmusicproxy.net][0]
 
 License: **GPL v3**
-
 
 ## About
 This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and M3U playlists (e.g., [MPD server][1], [VLC][2], ...). It can work also with a free account without All Access extras.
@@ -69,15 +69,15 @@ Here a list of the supported option on the command-line:
 - `--log`: log file
 - `--daemon`: daemonize the program
 
-
 ### Config file
 All the command-line options can be specified in a configuration file. A configuration with the strictly required options could look like this:
 
-```
-email = my.email@google.com
-password = my-secret-password
-device-id = 54bbd32a309a34ef
-```
+  ```
+  email = my.email@google.com
+  password = my-secret-password
+  device-id = 54bbd32a309a34ef
+  ```
+
 When the proxy is launched, it searches for a file named `gmusicproxy.cfg` on the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using the option `--config`.
 
 ### URL-based interface
@@ -193,6 +193,8 @@ As stated above, you need the device ID of a registered Android device in order 
 
 The program was designed under Linux systems but it should work also under Windows or Mac OS X. Testers are welcome!
 
+
+[0]: http://gmusicproxy.net/
 [1]: http://www.musicpd.org/
 [2]: http://www.videolan.org/vlc/
 [3]: https://github.com/simon-weber/Unofficial-Google-Music-API
