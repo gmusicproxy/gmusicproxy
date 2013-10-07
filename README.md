@@ -1,10 +1,10 @@
 #GMusicProxy – Google Play Music Proxy
 
-*"Let's stream Google Play Music using any music program"*
+*"Let's stream Google Play Music using any media-player"*
 
-© [Mario Di Raimondo](mario.diraimondo@gmail.com)
+© [Mario Di Raimondo](mailto:info@gmusicproxy.net)
 
-web-site: [gmusicproxy.net][0]
+site: http://gmusicproxy.net
 
 License: **GPL v3**
 
@@ -24,29 +24,61 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 - request a transient (it will be not registered in your account) station based on any search
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
+### Changelog
+- 0.9.1 (2013-10-05):
+  - a new and more robust message/log system
+  - possibility to daemonize the proxy
+- 0.8 (2013-09-22):
+  - rewrote command-line/config system
+  - possibility to disable AA features for a free GM account
+  - improved documentation
+- 0.6 (2013-09-15): first public version
+
 ## Setup
 ### Requirements
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
-- a **Python** 2.x interpreter
+- a **Python** 2.7 interpreter
 - a snapshot of **gmusicapi** that supports MobileClient and All Access (at the moment we need the `develop` branch)
 - few extra python libs: *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
-- The easiest way is to use the automagic `pip` to install the proxy with all the dependencies from PyPI and GitHub repositories:
-  `pip install https://github.com/diraimondo/gmusicproxy/tarball/master`
+The following instructions have a Debian/Ubuntu GNU/Linux system as reference: it is possible to use in any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
+
+- The easiest way is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
+
+  ```bash
+     sudo apt-get install python-pip
+     sudo pip install https://github.com/diraimondo/gmusicproxy/tarball/master`
+     GMusicProxy
+  ```
   or you can install it from a local copy of the repository:
+    - `sudo apt-get install python-pip`
+    - get a copy of the sources using one of these methods:
+      - `git clone https://github.com/diraimondo/gmusicproxy.git`
+      - download and extract a [tar][6] or [zip][7] archive of the last version
+    - install it and all the dependencies using `sudo pip install .` from the inside of the folder
+    - use it from everywhere: `GMusicProxy`
 
-  ```bash
-  git clone https://github.com/diraimondo/gmusicproxy.git
-  pip install .
-  ```
+  Importante note: the usage of `sudo pip ...` commands could mess up your main packaging system; consider the next method.
 
-- The previous method could require the use of `sudo` or the rights of `root` user. If you don't want to mess your system, the right way it to use `virtualenv`:
+- The right way to use an under-development python project makes use of `virtualenv` and `virtualenvwrapper` utilities:
+  - install the proxy once:
 
-  ```bash
-  mkvirtualenv gmusicproxy
-  pip install https://github.com/diraimondo/gmusicproxy/tarball/master
-  ```
+    ```bash
+    sudo apt-get install python-pip python-virtualenv virtualenvwrapper
+    mkvirtualenv gmusicproxy
+    pip install https://github.com/diraimondo/gmusicproxy/tarball/master
+    ```
+    note: it could be necessary to close/reopen the shell in order to use virtualenvwrapper aliases
+  - launch the proxy when you need it:
+
+    ```bash
+    workon gmusicproxy
+    GMusicProxy
+    ```
+  - if you need to upgrade the proxy and its dependencies:
+    - use the option `--upgrade` on the `pip` installation command (e.g., `pip install --upgrade https://...`), or
+    - clean-up the virtualenv using `deactivate ; rmvirtualenv gmusicproxy` and reinstall everything as before.
 
 ## Usage 
 With the service running on a computer on the LAN, it can be used by any others of the same network.
@@ -177,22 +209,22 @@ Here a list of the supported requests (with some restricted by the availability 
   curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes' | sort -R | head -n1 | vlc -
   ```
 
-
 ## Support
 Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
 
-Feel free to open [bug reports][4] (complete of verbose output produced with option `--debug`) on GitHub, to fork it and to make [pull requests][5] for your contributions.
+Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
 
 ### Known problems / Ideas
 - It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
 - The stations by genre are missing at the moment: to ask about this to Simon.
+- When Simon will release a stable version of gmusicapi with AA support I could release packages for Debian/Ubuntu systems.
 
 ### Limitations
 The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
 
 As stated above, you need the device ID of a registered Android device in order to stream the music. This is a requirement of the Google API. An alternative could be to register a virtual-device using the emulator of the Android SDK.
 
-The program was designed under Linux systems but it should work also under Windows or Mac OS X. Testers are welcome!
+The program was designed under Linux systems but it *could* work also under Windows or Mac OS X. Reports by audacious testers are welcome!
 
 
 [0]: http://gmusicproxy.net/
@@ -201,3 +233,5 @@ The program was designed under Linux systems but it should work also under Windo
 [3]: https://github.com/simon-weber/Unofficial-Google-Music-API
 [4]: https://github.com/diraimondo/gmusicproxy/issues
 [5]: https://github.com/diraimondo/gmusicproxy/pulls
+[6]: https://github.com/leoedin/gmusicproxy/archive/master.tar.gz
+[7]: https://github.com/leoedin/gmusicproxy/archive/master.zip
