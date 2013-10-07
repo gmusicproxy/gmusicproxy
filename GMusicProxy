@@ -20,9 +20,9 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import BaseHTTPServer, socket, urlparse, urllib2
+import BaseHTTPServer, socket, urlparse, urllib2, requests
 import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon
-import gmusicapi, eyed3.id3
+import gmusicapi, gmusicapi.utils, eyed3.id3
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -140,14 +140,14 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if config['disable_all_access']:
             info = None
             # a not so nice trick: we can't use the All Access 'get_track_info' method so we have to download the complete list of all the tracks in collection to get the information about this specific track
-            allSongs = api.get_all_songs()
+            allSongs = self._robust_retry(lambda:api.get_all_songs())
             for song in allSongs:
                 if 'nid' in song and song['nid'] == id:
                     info = song.copy()
                     break
             allSongs = None
         else:
-            info = api.get_track_info(store_track_id=id)
+            info = self._robust_retry(lambda:api.get_track_info(store_track_id=id))
         if info is None:
             logger.info('Streaming song with id \'%s\'', id)
         else:
@@ -171,7 +171,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             os.unlink(tempFile.name)
             self.wfile.write(tagsBin)
 
-        url = api.get_stream_url(song_id=id, device_id=config['device_id'])
+        url = self._robust_retry(lambda:api.get_stream_url(song_id=id, device_id=config['device_id']))
         logger.debug('streaming url: %s', url)
 
         mp3 = opener.open(url)
@@ -182,7 +182,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def _get_all_stations(self, format, separator, onlyUrl):
         logger.info('Getting all stations as plain-text list...' if format == 'text' else 'Getting all stations as M3U list...')
-        stations = api.get_all_stations()
+        stations = self._robust_retry(lambda:api.get_all_stations())
         logger.debug(pprint.pformat(stations))
         if format.lower().strip() != 'text': self.wfile.write('#EXTM3U\n')
         logger.debug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
@@ -197,7 +197,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def _get_all_playlists(self, format, separator, onlyUrl):
         logger.info('Getting all playlists as plain-text list...' if format.lower().strip() == 'text' else 'Getting all playlists as M3U list...')
-        playlists = api.get_all_playlists()
+        playlists = self._robust_retry(lambda:api.get_all_playlists())
         logger.debug(pprint.pformat(playlists))
         if format.lower().strip() != 'text': self.wfile.write('#EXTM3U\n')
         logger.debug('generated playlist:' if format.lower().strip() == 'text' else 'generated playlist:\n#EXTM3U')
@@ -211,7 +211,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 logger.debug(line)
 
     def _get_station(self, id, numTracks):
-        station = api.get_station_tracks(station_id=id, num_tracks=numTracks)
+        station = self._robust_retry(lambda:api.get_station_tracks(station_id=id, num_tracks=numTracks))
         logger.info('Getting %s tracks from station with id \'%s\'', (numTracks, id))
         logger.debug(pprint.pformat(station))
         self.wfile.write('#EXTM3U\n')
@@ -225,9 +225,9 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def _get_new_station(self, id, type, numTracks, transient, name):
         stationId = api.create_station(name=name, track_id=id if type == 'song' else None, artist_id=id if type == 'artist' else None, album_id=id if type == 'album' else None)  ## by genre: TO DO
         if transient != 'no': transientStationIds.append(stationId)
-        station = api.get_station_tracks(station_id=stationId, num_tracks=numTracks)
+        station = self._robust_retry(lambda:api.get_station_tracks(station_id=stationId, num_tracks=numTracks))
         if transient != 'no': 
-            api.delete_stations(stationId)
+            self._robust_retry(lambda:api.delete_stations(stationId))
             transientStationIds.remove(stationId)
         logger.info('Getting %s tracks from a new %s station based on %s id \'%s\'' % (numTracks, 'transient' if transient != 'no' else 'persistent', type, id))
         logger.debug(pprint.pformat(station))
@@ -242,7 +242,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def _get_playlist(self, id):
             logger.info('Getting tracks from playlist with id \'%s\'', id)
             # we have to download the content of all the playlists (actual API limitation)
-            playlistsWithContents = api.get_all_playlist_contents()
+            playlistsWithContents = self._robust_retry(lambda:api.get_all_playlist_contents())
             logger.debug(pprint.pformat(playlistsWithContents))
             self.wfile.write('#EXTM3U\n')
             logger.debug('generated playlist:\n#EXTM3U')
@@ -258,7 +258,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if not found: logger.warning("Playlist not found!")
 
     def _get_album(self, id):
-        album = api.get_album_info(albumid=id, include_tracks=True)
+        album = self._robust_retry(lambda:api.get_album_info(albumid=id, include_tracks=True))
         logger.info('Getting the tracks of the album with id \'%s\': %s - %s', id, album['name'], album['artist'])
         logger.debug(pprint.pformat(album))
         self.wfile.write('#EXTM3U\n')
@@ -271,7 +271,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     logger.debug(line)
 
     def _get_top_tracks_artist(self, id, numTracks):
-        artist = api.get_artist_info(artist_id=id, include_albums=False, max_top_tracks=numTracks, max_rel_artist=0)
+        artist = self._robust_retry(lambda:api.get_artist_info(artist_id=id, include_albums=False, max_top_tracks=numTracks, max_rel_artist=0))
         logger.info('Getting %s top tracks of the artist with id \'%s\': %s', numTracks, id, artist['name'])
         logger.debug(pprint.pformat(artist))
         self.wfile.write('#EXTM3U\n')
@@ -284,7 +284,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     logger.debug(line)
 
     def _get_collection(self):
-        songs = api.get_all_songs()
+        songs = self._robust_retry(lambda:api.get_all_songs())
         if len(songs) == 0:
             logger.warning("No songs in your collection!?!")
             return
@@ -305,7 +305,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.info('Searching for %s with query: %s %s', type, query_artist, query_title)
         match = None
         if type == 'artist':
-            results = api.search_all_access(query_artist)
+            results = self._robust_retry(lambda:api.search_all_access(query_artist))
             logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'artist_hits' in results and len(results['artist_hits']) > 0:
                 logger.debug('I\'m feeling lucky: lets select the first artist in list!')
@@ -324,7 +324,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 logger.warning('No matching found.')
         elif type == 'song':
-            results = api.search_all_access('%s %s' % (query_artist, query_title))
+            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title)))
             logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'song_hits' in results and len(results['song_hits']) > 0:
                 logger.debug('I\'m feeling lucky: lets select the first song!')
@@ -343,7 +343,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 logger.warning('No matching found.')
         elif type == 'album':
-            results = api.search_all_access('%s %s' % (query_artist, query_title))
+            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title)))
             logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'album_hits' in results and len(results['album_hits']) > 0:
                 logger.debug('I\'m feeling lucky: lets select the first album in list!')
@@ -363,6 +363,10 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 logger.warning('No matching found.')
         else:
             return
+    
+    @gmusicapi.utils.utils.retry(retry_exception=requests.exceptions.ConnectionError)
+    def _robust_retry(self, func):
+        return func()
 
     def handle_one_request(self):
         try:
