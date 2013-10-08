@@ -42,7 +42,7 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 - few extra python libs: *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
-The following instructions have a Debian/Ubuntu GNU/Linux system as reference: it is possible to use in any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
+The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless it works on any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
 
 - The easiest way is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
 
