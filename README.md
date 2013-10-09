@@ -13,9 +13,9 @@ This program permits the use of Google Play Music with All Access subscription w
 
 Google has released a nice music service and now it is even more interesting with the All Access option. The Google-way to listen your collection and the stations is by means of Android devices or any web browser. If you want to use your TVs or HiFi audio systems, the main tool is the Chromecast key. I can't buy one (at the moment it is not available in my country) and it looks a bit closed. Even more I already got a music-system based on a PC connected to my HiFi audio system: it makes use of [MPD][1] and I would like keep it.
 
-My project is based on the great [Unofficial Google Play Music API][3] of Simon Weber: it already permits to create URLs to stream the tracks as regular MP3 but they expire in 1 minute! This proxy generates persistent URLs that never expire and that you can add to any playlist.
+My project is based on the great [Unofficial Google Play Music API][3] of Simon Weber: it already permits to create URLs to stream the tracks as regular MP3 but they expire in 1 minute! Keeping this proxy running, it can generate persistent local URLs that never expire and that can be used in any media-player.
 
-This project is not supported nor endorsed by Google. It's aim is not the abuse of the service but the one to improove the access to the service. I'm not responsible of its misuse.
+This project is not supported nor endorsed by Google. It's aim is not the abuse of the service but the one to improove the access to it. I'm not responsible of its misuse.
 
 ### Features
 - create persistent URLs to all the tracks, albums and stations available on the Google Play Music + All Access platform
@@ -42,7 +42,7 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 - few extra python libs: *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
-The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless it works on any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
+The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless they work on any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
 
 - The easiest way is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
 
@@ -83,12 +83,12 @@ The following instructions have a Debian/Ubuntu GNU/Linux system as reference: n
 ## Usage 
 With the service running on a computer on the LAN, it can be used by any others of the same network.
 
-To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create an application-specific password to be used with this program. Another required information is the device ID of an Android device registered in your account: you can discover the one of your devices using the option `--list-devices` on the command-line.
+To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create an application-specific password to be used with this program. Another required information is the device ID of an Android device registered in your account: you can discover it using the option `--list-devices` on the command-line.
 
 You can provide such necessary information, as well as other options, on the command-line of the program or using a configuration file.
 
 ### Command-line
-Here a list of the supported option on the command-line:
+Here a list of the supported options on the command-line:
 
 - `--email`: email address of the Google account [required]
 - `--password`: password of the Google account [required]
@@ -103,7 +103,7 @@ Here a list of the supported option on the command-line:
 - `--daemon`: daemonize the program
 
 ### Config file
-All the command-line options can be specified in a configuration file. A configuration with the strictly required options could look like this:
+All the command-line options can be specified in a configuration file. An example of configuration with the strictly required options could look like this:
 
   ```
   email = my.email@gmail.com
@@ -111,14 +111,14 @@ All the command-line options can be specified in a configuration file. A configu
   device-id = 54bbd32a309a34ef
   ```
 
-When the proxy is launched, it searches for a file named `gmusicproxy.cfg` on the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using the option `--config`.
+When the proxy is launched, it searches for a file named `gmusicproxy.cfg` in the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using the option `--config`.
 
 ### URL-based interface
 The only way to use the service is to query the proxy by means of properly formatted HTTP requests over the configured TCP port. Such URLs can be used directly in music programs or in scripts or in any browser. A URL looks like this: `http://host:port/command?param_1=value&param_2=value`. I don't apply any validation to the submitted values: please, be nice with the proxy and don't exploit it! :)
 
-Consider that any song, album, artist, playlist or station got an unique ID in Google Music API but there are many methods to discover them. 
+Consider that any song, album, artist, playlist or station got a unique ID in Google Music API but there are many methods to discover them. 
 
-Here a list of the supported requests (with some restricted by the availability a All Access subscription):
+Here a list of the supported requests (with some restricted by the availability of a All Access subscription):
 
 - `/get_collection`: reports an M3U playlist with all the songs in your personal collection.
 - `/search_id`: reports the unique ID as result of a search for an artist, a song or an album.
@@ -198,12 +198,12 @@ Here a list of the supported requests (with some restricted by the availability 
   ```
 
 #### [VLC][2]
-- You can listen the generated playlist using VLC from command-line.
+- You can listen any generated playlist using VLC from command-line.
 
   ```bash
   vlc 'http://localhost:9999/get_by_search?type=album&artist=Rolling%20Stones&title=tattoo&exact=no'
   ```
-- You can automatically choose at random one registered station and then extract 50 fresh songs from it.
+- You can automatically choose at random one registered station.
 
   ```bash
   curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes' | sort -R | head -n1 | vlc -
@@ -218,6 +218,7 @@ Feel free to open [bug reports][4] (complete of verbose output produced with opt
 - It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
 - The stations by genre are missing at the moment: to ask about this to Simon.
 - When Simon will release a stable version of gmusicapi with AA support I could release packages for Debian/Ubuntu systems.
+- A URL call to rate as "like/dislike" a song: work in progress.
 
 ### Limitations
 The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
