@@ -48,7 +48,7 @@ The following instructions have a Debian/Ubuntu GNU/Linux system as reference: n
 
   ```bash
      sudo apt-get install python-pip
-     sudo pip install https://github.com/diraimondo/gmusicproxy/tarball/master`
+     sudo pip install https://github.com/diraimondo/gmusicproxy/tarball/master
      GMusicProxy
   ```
   or you can install it from a local copy of the repository:
