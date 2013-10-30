@@ -250,7 +250,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def _get_playlist(self, id):
             logger.info('Getting tracks from playlist with id \'%s\'', id)
             # we have to download the content of all the playlists (actual API limitation)
-            playlistsWithContents = self._robust_retry(lambda:api.get_all_playlist_contents())
+            playlistsWithContents = self._robust_retry(lambda:api.get_all_user_playlist_contents())
             logger.debug(pprint.pformat(playlistsWithContents))
             self.wfile.write('#EXTM3U\n')
             logger.debug('generated playlist:\n#EXTM3U')
