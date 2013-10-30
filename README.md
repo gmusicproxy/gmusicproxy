@@ -25,6 +25,9 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 0.9.2 (2013-10-30):
+  - added the possibility to rate songs (like/dislike)
+  - 
 - 0.9.1 (2013-10-05):
   - a new and more robust message/log system
   - possibility to daemonize the proxy
@@ -176,6 +179,12 @@ Here a list of the supported requests (with some restricted by the availability 
      - `id`: the unique identifier of the artist [required]
      - `type`: the type of id specified among `artist`, `album` and `song` [required]
      - `num_tracks`: the number of top songs to return [default: 20]
+- `/like_song`: reports a positive rating on the song with specified id.
+  Allowed parameters:
+     - `id`: the unique identifier of the song [required]
+- `/dislike_song`: reports a negative rating on the song with specified id.
+  Allowed parameters:
+     - `id`: the unique identifier of the song [required]
 
 ### Examples of integration
 #### [MPD][1]

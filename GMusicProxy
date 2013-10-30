@@ -125,6 +125,14 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no')
             if result and len(result)>0:
                 self._get_new_station(id=result, type=params['type'][0].lower().strip(), numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation, transient=params['transient'][0].lower().strip() if 'transient' in params else 'yes', name=params['name'][0] if 'name' in params else transientStationName)
+        elif parsedPath.path == '/like_song' and 'id' in params:
+            self.send_response(200)
+            self.end_headers()
+            self._rate_song(id=params['id'][0], rating=5)
+        elif parsedPath.path == '/dislike_song' and 'id' in params:
+            self.send_response(200)
+            self.end_headers()
+            self._rate_song(id=params['id'][0], rating=1)
         else:
             self.send_response(500)
             self.end_headers()
@@ -363,6 +371,26 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 logger.warning('No matching found.')
         else:
             return
+
+    def _rate_song(self, id, rating=0):
+        if config['disable_all_access']:
+            info = None
+            # the same not so nice trick as above
+            allSongs = self._robust_retry(lambda:api.get_all_songs())
+            for song in allSongs:
+                if 'nid' in song and song['nid'] == id:
+                    info = song.copy()
+                    break
+            allSongs = None
+        else:
+            info = self._robust_retry(lambda:api.get_track_info(store_track_id=id))
+        if info is None:
+            logger.warning('Song with id \'%s\' not found.', id)
+        else:
+            logger.info('Reporting rating=%s on song with id \'%s\': %s - %s', rating, id, info['artist'], info['title'])
+            logger.debug(pprint.pformat(info))
+            info['rating'] = rating
+            self._robust_retry(lambda:api.change_song_metadata([info]))
     
     @gmusicapi.utils.utils.retry(retry_exception=requests.exceptions.ConnectionError)
     def _robust_retry(self, func):
@@ -478,13 +506,13 @@ def autodetectLocalIP():
     return '127.0.0.1'
 
 if __name__ == '__main__':
-    downloadBlockSize = 30*1024
+    downloadBlockSize = 40*1024
     defaultNumberTracksStation = 50
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9.1'
+    programVersion = '0.9.2'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
