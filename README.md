@@ -27,7 +27,6 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 ### Changelog
 - 0.9.2 (2013-10-30):
   - added the possibility to rate songs (like/dislike)
-  - 
 - 0.9.1 (2013-10-05):
   - a new and more robust message/log system
   - possibility to daemonize the proxy
