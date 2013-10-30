@@ -266,7 +266,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if not found: logger.warning("Playlist not found!")
 
     def _get_album(self, id):
-        album = self._robust_retry(lambda:api.get_album_info(albumid=id, include_tracks=True))
+        album = self._robust_retry(lambda:api.get_album_info(album_id=id, include_tracks=True))
         logger.info('Getting the tracks of the album with id \'%s\': %s - %s', id, album['name'], album['artist'])
         logger.debug(pprint.pformat(album))
         self.wfile.write('#EXTM3U\n')
