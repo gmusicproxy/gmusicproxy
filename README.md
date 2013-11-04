@@ -40,8 +40,7 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 ### Requirements
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
 - a **Python** 2.7 interpreter
-- a snapshot of **gmusicapi** that supports MobileClient and All Access (at the moment we need the `develop` branch)
-- few extra python libs: *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
+- some python libs: *gmusicapi*, *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
 The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless they work on any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
@@ -224,9 +223,7 @@ Feel free to open [bug reports][4] (complete of verbose output produced with opt
 
 ### Known problems / Ideas
 - It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
-- The stations by genre are missing at the moment: to ask about this to Simon.
-- When Simon will release a stable version of gmusicapi with AA support I could release packages for Debian/Ubuntu systems.
-- A URL call to rate as "like/dislike" a song: work in progress.
+- Waiting for recent packaging of Simon's gmusicapi 3.0.0, I could release packages for Debian/Ubuntu systems.
 
 ### Limitations
 The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
