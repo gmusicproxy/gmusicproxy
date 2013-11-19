@@ -443,6 +443,8 @@ def getOptions(filename):
 
     config = ConfigParser.SafeConfigParser()
     args = parser.parse_args()
+    fp = StringIO.StringIO('[dummy]\n')
+    config.readfp(fp)
     if args.config:
         fp = StringIO.StringIO('[dummy]\n' + args.config.read())
         config.readfp(fp)
@@ -512,7 +514,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9.2'
+    programVersion = '0.9.2.1'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
