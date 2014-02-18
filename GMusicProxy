@@ -163,6 +163,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             logger.debug(pprint.pformat(info))
             tags = eyed3.id3.Tag()
             if 'artist' in info: tags.artist = info['artist']
+            #if 'albumArtist' in info: tags.album_artist = info['albumArtist']  ## waiting new release of eyed3: https://bitbucket.org/nicfit/eyed3/commits/9071bba4977f
             if 'album' in info: tags.album = info['album']
             if 'title' in info: tags.title = info['title']
             if 'trackNumber' in info: tags.track_num = info['trackNumber']
