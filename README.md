@@ -15,7 +15,7 @@ Google has released a nice music service and now it is even more interesting wit
 
 My project is based on the great [Unofficial Google Play Music API][3] of Simon Weber: it already permits to create URLs to stream the tracks as regular MP3 but they expire in 1 minute! Keeping this proxy running, it can generate persistent local URLs that never expire and that can be used in any media-player.
 
-This project is not supported nor endorsed by Google. It's aim is not the abuse of the service but the one to improve the access to it. I'm not responsible of its misuse.
+This project is not supported nor endorsed by Google. Its aim is not the abuse of the service but the one to improve the access to it. I'm not responsible of its misuse.
 
 ### Features
 - create persistent URLs to all the tracks, albums and stations available on the Google Play Music + All Access platform
