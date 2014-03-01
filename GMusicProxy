@@ -21,7 +21,7 @@
 #
 
 import BaseHTTPServer, socket, urlparse, urllib2, requests
-import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon
+import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon, distutils.version
 import gmusicapi, gmusicapi.utils, eyed3.id3
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -441,6 +441,7 @@ def getOptions(filename):
     parser.add_argument('-D', '--debug', default=False, action='store_true', help='enable debug messages')
     parser.add_argument('-l', '--log', help='log file')
     parser.add_argument('-f', '--daemon', default=False, action='store_true', help='daemonize the program')
+    parser.add_argument('-v', '--disable-version-check', default=False, action='store_true', help='disable check for latest available version')
 
     config = ConfigParser.SafeConfigParser()
     args = parser.parse_args()
@@ -459,11 +460,12 @@ def getOptions(filename):
     if 'device-id' in configValues: configValues['device_id'] = configValues.pop('device-id')
     if 'list-devices' in configValues: configValues['list_devices'] = configValues.pop('list-devices')
     if 'disable-all-access' in configValues: configValues['disable_all_access'] = configValues.pop('disable-all-access')
+    if 'disable-version-check' in configValues: configValues['disable_version_check'] = configValues.pop('disable-version-check')
 
     # some defaults
     if 'host' not in configValues: configValues['host']='**auto**'
     if 'port' not in configValues: configValues['port']='9999'
-    
+
     parser.set_defaults(**configValues)
     args = parser.parse_args()
     config = vars(args)
@@ -508,6 +510,19 @@ def autodetectLocalIP():
                 return j['addr']
     return '127.0.0.1'
 
+def checkLatestVersion():
+    logger.debug('Fetching lastest version of %s...', programName)
+    latestVersion = opener.open(urlLatestVersion).read()
+    logger.debug('latest available version: %s', latestVersion)
+    logger.debug('installed version: %s', programVersion)
+    try:
+        if latestVersion == '':
+            raise ValueError
+        if distutils.version.StrictVersion(programVersion) < distutils.version.StrictVersion(latestVersion):
+            logger.warning('There is a new %s release of %s. Consider the idea to update your installation in order to keep it working!\n', latestVersion, programName)
+    except ValueError:
+        logger.debug('Error in fetching version information or malformed data (\'%s\', \'%s\')', latestVersion, programVersion)
+
 if __name__ == '__main__':
     downloadBlockSize = 40*1024
     defaultNumberTracksStation = 50
@@ -515,10 +530,11 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9.2.1'
+    programVersion = '0.9.2'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
+    urlLatestVersion = 'http://gmusicproxy.net/latest_version.php'
     config = dict()
 
     # remove previous root logging handler
@@ -577,6 +593,9 @@ if __name__ == '__main__':
     opener.addheaders = [('User-agent', '%s %s' % (programDescription, programVersion))]
 
     signal.signal(signal.SIGINT, signalHandler)
+
+    if not config['disable_version_check']:
+        checkLatestVersion()
 
     server = BaseHTTPServer.HTTPServer(('0.0.0.0', config['port']), GetHandler)
     logger.info('Listening on port %s...', config['port'])

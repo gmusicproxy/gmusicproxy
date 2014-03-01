@@ -25,6 +25,8 @@ This project is not supported nor endorsed by Google. It's aim is not the abuse 
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- unreleased (...):
+  - added control on startup for new versions
 - 0.9.2 (2013-10-30):
   - added the possibility to rate songs (like/dislike)
 - 0.9.1 (2013-10-05):
@@ -102,6 +104,7 @@ Here a list of the supported options on the command-line:
 - `--debug`: enable debug messages
 - `--log`: log file
 - `--daemon`: daemonize the program
+- `--disable-version-check`: disable check for latest available version
 
 ### Config file
 All the command-line options can be specified in a configuration file. An example of configuration with the strictly required options could look like this:
