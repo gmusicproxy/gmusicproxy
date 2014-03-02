@@ -25,7 +25,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- unreleased (...):
+- 0.9.4 (2014-02-02):
+  - added support for 'album artist' tag (requires a development version >= 0.7.5-beta of eyed3 lib)
   - added control on startup for new versions
 - 0.9.2 (2013-10-30):
   - added the possibility to rate songs (like/dislike)
