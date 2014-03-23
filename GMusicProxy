@@ -57,6 +57,13 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             if self._check_aa(): return
             self._get_station(id=params['id'][0], numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation)
+        elif parsedPath.path == '/get_ifl_station':
+            self.send_response(200)
+            self.send_header('Content-type', 'audio/mpegurl')
+            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
+            self.end_headers()
+            if self._check_aa(): return
+            self._get_station(id='IFL', numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation)
         elif parsedPath.path == '/get_playlist' and 'id' in params:
             self.send_response(200)
             self.send_header('Content-type', 'audio/mpegurl')
@@ -531,7 +538,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9.4'
+    programVersion = '0.9.5'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
