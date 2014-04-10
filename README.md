@@ -26,7 +26,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 ### Changelog
 - 0.9.5 (2014-03-23):
-  - added support for the dynamic 'I feel lucky' station: `get_ifl_station`
+  - added support for the dynamic 'I'm feeling lucky' station: `get_ifl_station`
 - 0.9.4 (2014-02-02):
   - added support for 'album artist' tag (requires a development version >= 0.7.5-beta of eyed3 lib)
   - added control on startup for new versions
@@ -169,7 +169,7 @@ Here a list of the supported requests (with some restricted by the availability 
   Allowed parameters:
      - `id`: the unique identifier of the station [required]
      - `num_tracks`: the number of tracks to extract [default: 20]
-- `/get_ifl_station`: reports an M3U playlist of tracks associated to the automatic 'I feel lucky' station  [requires A.A.].
+- `/get_ifl_station`: reports an M3U playlist of tracks associated to the automatic "I'm feeling lucky" station  [requires A.A.].
   Allowed parameters:
      - `num_tracks`: the number of tracks to extract [default: 20]
 - `/get_playlist`: reports the content of a registered playlist in the M3U format.
