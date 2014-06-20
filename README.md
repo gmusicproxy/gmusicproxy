@@ -65,6 +65,8 @@ The following instructions have a Debian/Ubuntu GNU/Linux system as reference: n
     - install it and all the dependencies using `sudo pip install .` from the inside of the folder
     - use it from everywhere: `GMusicProxy`
 
+  The `pip install ...` command could require the options `--allow-external eyed3 --allow-unverified eyed3` on some systems in order to validate the installation of `eyed3`.
+
   Importante note: the usage of `sudo pip ...` commands could mess up your main packaging system; consider the next method.
 
 - The right way to use an under-development python project makes use of `virtualenv` and `virtualenvwrapper` utilities:
