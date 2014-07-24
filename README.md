@@ -41,6 +41,11 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
   - improved documentation
 - 0.6 (2013-09-15): first public version
 
+### Related projects
+
+- Simon's Unofficial-Google-Music-API (the great backend used by gmusicproxy): https://github.com/simon-weber/Unofficial-Google-Music-API
+- web2py-mpd-gmproxy (a web interface that uses gmusicproxy as backend): https://github.com/matclab/web2py-mpd-gmproxy
+
 ## Setup
 ### Requirements
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
