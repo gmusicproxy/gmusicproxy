@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Google Play Music Proxy © Mario Di Raimondo < mario.diraimondo (at) gmail.com >
+# Updates for CSH DJ: Nick Depinet < depinetnick (at) gmail.com >
 # "Let's stream Google Play Music using any music program"
 # 
 # license: GPL v3
@@ -110,6 +111,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     self._get_song(result)
                 elif  params['type'][0].lower().strip() == 'album':
                     self._get_album(result)
+                elif params['type'][0].lower().strip() =='songs':
+                    self._get_songs(result)
         elif parsedPath.path == '/get_new_station_by_id' and 'id' in params and 'type' in params:
             self.send_response(200)
             self.send_header('Content-type', 'audio/mpegurl')
@@ -299,6 +302,15 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
                     self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
+    
+    def _get_songs(self, songs, numTracks):
+        self.wfile.write('#EXTM3U\n')
+        logger.debug('generated playlist:\n#EXTM3U')
+        for track in songs:
+            if 'nid' in track:
+                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                self.wfile.write(('%s\n' % line).encode('utf-8'))
+                    logger.debug(line)
 
     def _get_collection(self):
         songs = self._robust_retry(lambda:api.get_all_songs())
@@ -316,8 +328,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 logger.debug(line)      
 
     def _search(self, type, query_title, query_artist, exact):
-        if type is None or type not in ['artist', 'song', 'album']:
-            logger.warning('The type of search has to be specified: artist, song or album!')
+        if type is None or type not in ['artist', 'song', 'album', 'songs']:
+            logger.warning('The type of search has to be specified: artist, song, songs or album!')
             return
         logger.info('Searching for %s with query: %s %s', type, query_artist, query_title)
         match = None
@@ -357,6 +369,23 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 logger.info('Selected song: %s - %s (%s)', match['track']['artist'], match['track']['title'], match['track']['nid'])
                 logger.debug(pprint.pformat(match))
                 return match['track']['nid']
+            else:
+                logger.warning('No matching found.')
+        elif type == 'songs':
+            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title)))
+            logger.debug(pprint.pformat(results))
+            if exact != 'yes' and 'song_hits' in results and len(results['song_hits']) > 0:
+                logger.debug('I\'m feeling lucky: lets select the first song!')
+                match = results['song_hits']
+            else:
+                if 'song_hits' in results:
+                    for song in results['song_hits']:
+                        if 'title' in song['track'] and song['track']['title'].lower().strip() == query_title.lower().strip() and 'artist' in song['track'] and song['track']['artist'].lower().strip() == query_artist.lower().strip():
+                            logger.debug('Found exact matching song!')
+                            match = song
+                            break
+            if match:
+                return match
             else:
                 logger.warning('No matching found.')
         elif type == 'album':

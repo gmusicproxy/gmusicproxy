@@ -1,9 +1,10 @@
 #GMusicProxy – Google Play Music Proxy
 
 *"Let's stream Google Play Music using any media-player"*
+*"This fork modified for CSH DJ"*
 
 © [Mario Di Raimondo](mailto:info@gmusicproxy.net)
-
+Modified by: Nick Depinet <depinetnick@gmail.com>
 site: http://gmusicproxy.net
 
 License: **GPL v3**
@@ -16,6 +17,10 @@ Google has released a nice music service and now it is even more interesting wit
 My project is based on the great [Unofficial Google Play Music API][3] of Simon Weber: it already permits to create URLs to stream the tracks as regular MP3 but they expire in 1 minute! Keeping this proxy running, it can generate persistent local URLs that never expire and that can be used in any media-player.
 
 This project is not supported nor endorsed by Google. Its aim is not the abuse of the service but the one to improve the access to it. I'm not responsible of its misuse.
+
+### About this Fork
+This fork was designed to address the need of CSH DJ - mainly to be able to search for songs and get multiple songs returned as a result.
+This is done through the 'songs' search type and returns a playlist similar to that of the 'artists' search.
 
 ### Features
 - create persistent URLs to all the tracks, albums and stations available on the Google Play Music + All Access platform
