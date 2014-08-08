@@ -112,7 +112,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 elif  params['type'][0].lower().strip() == 'album':
                     self._get_album(result)
                 elif params['type'][0].lower().strip() =='songs':
-                    self._get_songs(result)
+                    self._get_songs(result, numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTopTracks)
         elif parsedPath.path == '/get_new_station_by_id' and 'id' in params and 'type' in params:
             self.send_response(200)
             self.send_header('Content-type', 'audio/mpegurl')
@@ -310,7 +310,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if 'nid' in track:
                 line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
-                    logger.debug(line)
+                logger.debug(line)
 
     def _get_collection(self):
         songs = self._robust_retry(lambda:api.get_all_songs())
