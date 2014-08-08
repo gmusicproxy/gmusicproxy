@@ -306,7 +306,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def _get_songs(self, songs, numTracks):
         self.wfile.write('#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
-        for track in songs:
+        for song in songs:
+            track = song['track']
             if 'nid' in track:
                 line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
