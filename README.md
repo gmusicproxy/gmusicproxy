@@ -30,6 +30,8 @@ This is done through the 'songs' search type and returns a playlist similar to t
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 0.9.6 (2014-08-08):
+  - added support for returning multiple songs in the search results using type `songs` for `get_by_search`
 - 0.9.5 (2014-03-23):
   - added support for the dynamic 'I'm feeling lucky' station: `get_ifl_station`
 - 0.9.4 (2014-02-02):

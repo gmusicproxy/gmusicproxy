@@ -103,7 +103,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-disposition', 'inline; filename=%s' % 'track.mp3' if ('type' in params and params['type'][0].lower().strip() == 'song') else 'playlist.m3u')
             self.end_headers()
             if self._check_aa(): return
-            result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no')
+            result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no', max_results=params['num_tracks'][0] if 'num_tracks' in params else None)
             if result and len(result)>0:
                 if params['type'][0].lower().strip() == 'artist':
                     self._get_top_tracks_artist(result, numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTopTracks)
@@ -328,7 +328,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)      
 
-    def _search(self, type, query_title, query_artist, exact):
+    def _search(self, type, query_title, query_artist, exact, max_results=None):
         if type is None or type not in ['artist', 'song', 'album', 'songs']:
             logger.warning('The type of search has to be specified: artist, song, songs or album!')
             return
@@ -373,7 +373,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 logger.warning('No matching found.')
         elif type == 'songs':
-            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title)))
+            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title), max_results))
             logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'song_hits' in results and len(results['song_hits']) > 0:
                 logger.debug('I\'m feeling lucky: lets select the first song!')
@@ -568,7 +568,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9.5'
+    programVersion = '0.9.6'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
