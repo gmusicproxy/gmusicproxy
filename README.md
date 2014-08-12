@@ -1,9 +1,10 @@
 #GMusicProxy – Google Play Music Proxy
 
 *"Let's stream Google Play Music using any media-player"*
+*"This fork modified for CSH DJ"*
 
 © [Mario Di Raimondo](mailto:info@gmusicproxy.net)
-
+Modified by: Nick Depinet <depinetnick@gmail.com>
 site: http://gmusicproxy.net
 
 License: **GPL v3**
@@ -17,6 +18,10 @@ My project is based on the great [Unofficial Google Play Music API][3] of Simon 
 
 This project is not supported nor endorsed by Google. Its aim is not the abuse of the service but the one to improve the access to it. I'm not responsible of its misuse.
 
+### About this Fork
+This fork was designed to address the need of CSH DJ - mainly to be able to search for songs and get multiple songs returned as a result.
+This is done through the 'songs' search type and returns a playlist similar to that of the 'artists' search.
+
 ### Features
 - create persistent URLs to all the tracks, albums and stations available on the Google Play Music + All Access platform
 - get access to all the songs in your collection, playlists and registered stations
@@ -25,6 +30,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 0.9.6 (2014-08-08):
+  - added support for returning multiple songs in the search results using type `songs` for `get_by_search`
 - 0.9.5 (2014-03-23):
   - added support for the dynamic 'I'm feeling lucky' station: `get_ifl_station`
 - 0.9.4 (2014-02-02):
