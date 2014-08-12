@@ -1,11 +1,12 @@
 #GMusicProxy – Google Play Music Proxy
 
 *"Let's stream Google Play Music using any media-player"*
-*"This fork modified for CSH DJ"*
 
 © [Mario Di Raimondo](mailto:info@gmusicproxy.net)
-Modified by: Nick Depinet <depinetnick@gmail.com>
 site: http://gmusicproxy.net
+
+contributors:
+- Nick Depinet <depinetnick@gmail.com>
 
 License: **GPL v3**
 
@@ -18,10 +19,6 @@ My project is based on the great [Unofficial Google Play Music API][3] of Simon 
 
 This project is not supported nor endorsed by Google. Its aim is not the abuse of the service but the one to improve the access to it. I'm not responsible of its misuse.
 
-### About this Fork
-This fork was designed to address the need of CSH DJ - mainly to be able to search for songs and get multiple songs returned as a result.
-This is done through the 'songs' search type and returns a playlist similar to that of the 'artists' search.
-
 ### Features
 - create persistent URLs to all the tracks, albums and stations available on the Google Play Music + All Access platform
 - get access to all the songs in your collection, playlists and registered stations
@@ -30,6 +27,8 @@ This is done through the 'songs' search type and returns a playlist similar to t
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- x.y.z
+  - merged a contribution by Nick Depinet to report all the possible matches of a search (support required by project CSH DJ)
 - 0.9.6 (2014-08-08):
   - added support for returning multiple songs in the search results using type `songs` for `get_by_search`
 - 0.9.5 (2014-03-23):
@@ -148,12 +147,12 @@ Here a list of the supported requests (with some restricted by the availability 
      - `title`: a string to search in the title of the album or of the song
      - `artist`: a string to search in the name of the artist in any kind of search
      - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
-- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song) [requires A.A.].
+- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song); it is also possible to get the full list of matches reported by Google Music using search with `type=matches` [requires A.A.].
   Allowed parameters:
-     - `type`: search for `artist`, `album` or `song` [required]
+     - `type`: search for `artist`, `album`, `song` or `matches` [required]
      - `title`: a string to search in the title of the album or of the song
      - `artist`: a string to search in the name of the artist in any kind of search
-     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song; it doesn't make sense with a search for `matches` [default: `no`]
      - `num_tracks`: the number of top songs to return in a search for artist [default: 20]
 - `/get_all_stations`: reports a list of registered stations as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one station per line)  [requires A.A.].
   Allowed parameters:
