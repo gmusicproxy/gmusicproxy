@@ -6,7 +6,7 @@
 site: http://gmusicproxy.net
 
 contributors:
-- Nick Depinet <depinetnick@gmail.com>
+- [Nick Depinet](mailto:depinetnick@gmail.com)
 
 License: **GPL v3**
 
