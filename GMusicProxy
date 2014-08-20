@@ -37,7 +37,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if parsedPath.path == '/get_song' and 'id' in params:
             self.send_response(200)
             self.send_header('Content-type', 'audio/mpeg')
-            self.send_header('Content-disposition', 'inline; filename=track.mp3')
+            self.send_header('Content-disposition', 'inline; filename=%s.mp3' % params['id'][0].strip())
             self.end_headers()
             self._get_song(id=params['id'][0])
         elif parsedPath.path == '/get_all_stations':
