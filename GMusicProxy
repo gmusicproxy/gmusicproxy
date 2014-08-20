@@ -180,7 +180,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if 'album' in info: tags.album = info['album']
             if 'title' in info: tags.title = info['title']
             if 'trackNumber' in info: tags.track_num = info['trackNumber']
-            if 'discNumber' in info: tags.disk_num = info['discNumber']
+            if 'discNumber' in info: tags.disc_num = info['discNumber']
             if 'genre' in info: tags.genre = eyed3.id3.Genre(info['genre'])
             if 'albumArtRef' in info:
                 albumArt = opener.open(info['albumArtRef'][0]['url']).read()
