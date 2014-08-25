@@ -37,7 +37,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if parsedPath.path == '/get_song' and 'id' in params:
             self.send_response(200)
             self.send_header('Content-type', 'audio/mpeg')
-            self.send_header('Content-disposition', 'inline; filename=track.mp3')
+            self.send_header('Content-disposition', 'inline; filename=%s.mp3' % params['id'][0].strip())
             self.end_headers()
             self._get_song(id=params['id'][0])
         elif parsedPath.path == '/get_all_stations':
@@ -180,7 +180,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if 'album' in info: tags.album = info['album']
             if 'title' in info: tags.title = info['title']
             if 'trackNumber' in info: tags.track_num = info['trackNumber']
-            if 'discNumber' in info: tags.disk_num = info['discNumber']
+            if 'discNumber' in info: tags.disc_num = info['discNumber']
             if 'genre' in info: tags.genre = eyed3.id3.Genre(info['genre'])
             if 'albumArtRef' in info:
                 albumArt = opener.open(info['albumArtRef'][0]['url']).read()
