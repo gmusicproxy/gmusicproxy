@@ -27,7 +27,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- x.y.z
+- 0.9.7 (2014-08-25):
   - merged a contribution by Nick Depinet to report all the possible matches of a search (support required by project CSH DJ)
 - 0.9.6 (2014-08-08):
   - added support for returning multiple songs in the search results using type `songs` for `get_by_search`
@@ -85,7 +85,7 @@ The following instructions have a Debian/Ubuntu GNU/Linux system as reference: n
 
     ```bash
     sudo apt-get install python-pip python-virtualenv virtualenvwrapper
-    mkvirtualenv gmusicproxy
+    mkvirtualenv -p /usr/bin/python2 gmusicproxy
     pip install https://github.com/diraimondo/gmusicproxy/tarball/master
     ```
     note: it could be necessary to close/reopen the shell in order to use virtualenvwrapper aliases
