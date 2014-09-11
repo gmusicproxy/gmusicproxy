@@ -27,6 +27,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 0.9.x:
+  - new option `extended-m3u`: it optionally extends `#EXTINF:` lines of the produced M3U lists to a non-standard format like `artist - song title - album title`
 - 0.9.7 (2014-08-25):
   - merged a contribution by Nick Depinet to report all the possible matches of a search (support required by project CSH DJ)
 - 0.9.6 (2014-08-08):
@@ -121,6 +123,7 @@ Here a list of the supported options on the command-line:
 - `--log`: log file
 - `--daemon`: daemonize the program
 - `--disable-version-check`: disable check for latest available version
+- `--extended-m3u`: enable non-standard extended m3u headers
 
 ### Config file
 All the command-line options can be specified in a configuration file. An example of configuration with the strictly required options could look like this:

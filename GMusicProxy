@@ -240,7 +240,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
-                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
@@ -257,7 +257,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
-                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
@@ -273,7 +273,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if 'id' in playlist and playlist['id'] == id:
                     for track in playlist['tracks']:
                         if 'trackId' in track and 'track' in track:
-                            line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['track']['durationMillis'])/1000) if 'durationMillis' in track['track'] else -1, '%s - ' % track['track']['artist'] if 'artist' in track['track'] else '', track['track']['title'] if 'title' in track['track'] else '', config['host'], config['port'], track['trackId'])
+                            line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['track']['durationMillis'])/1000) if 'durationMillis' in track['track'] else -1, '%s - ' % track['track']['artist'] if 'artist' in track['track'] else '', track['track']['title'] if 'title' in track['track'] else '', ' - %s' % track['track']['album'] if config['extended_m3u'] and 'album' in track['track'] else '', config['host'], config['port'], track['trackId'])
                             self.wfile.write(('%s\n' % line).encode('utf-8'))
                             logger.debug(line)
                     found=True
@@ -288,7 +288,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if 'tracks' in album:
             for track in album['tracks']:
                 if 'nid' in track:
-                    line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                    line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
                     self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
 
@@ -301,7 +301,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if 'topTracks' in artist:
             for track in artist['topTracks']:
                 if 'nid' in track:
-                    line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                    line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
                     self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
     
@@ -311,7 +311,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         for song in matches:
             track = song['track']
             if 'nid' in track:
-                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
@@ -326,7 +326,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for track in songs:
             if 'nid' in track:
-                line = '#EXTINF:%s,%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', config['host'], config['port'], track['nid'])
+                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)      
 
@@ -473,6 +473,7 @@ def getOptions(filename):
     parser.add_argument('-l', '--log', help='log file')
     parser.add_argument('-f', '--daemon', default=False, action='store_true', help='daemonize the program')
     parser.add_argument('-v', '--disable-version-check', default=False, action='store_true', help='disable check for latest available version')
+    parser.add_argument('-x', '--extended-m3u', default=False, action='store_true', help='enable non-standard extended m3u headers')
 
     config = ConfigParser.SafeConfigParser()
     args = parser.parse_args()
@@ -492,6 +493,7 @@ def getOptions(filename):
     if 'list-devices' in configValues: configValues['list_devices'] = configValues.pop('list-devices')
     if 'disable-all-access' in configValues: configValues['disable_all_access'] = configValues.pop('disable-all-access')
     if 'disable-version-check' in configValues: configValues['disable_version_check'] = configValues.pop('disable-version-check')
+    if 'extended-m3u' in configValues: configValues['extended_m3u'] = configValues.pop('extended-m3u')
 
     # some defaults
     if 'host' not in configValues: configValues['host']='**auto**'
@@ -561,7 +563,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9.7'
+    programVersion = '0.9.8'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
