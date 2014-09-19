@@ -27,7 +27,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- 0.9.x:
+- 0.9.8:
   - new option `extended-m3u`: it optionally extends `#EXTINF:` lines of the produced M3U lists to a non-standard format like `artist - song title - album title`
 - 0.9.7 (2014-08-25):
   - merged a contribution by Nick Depinet to report all the possible matches of a search (support required by project CSH DJ)
