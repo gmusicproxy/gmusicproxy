@@ -63,7 +63,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Installation
 The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless they work on any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
 
-In order to build some dependencies, you need for sure a working building system: `apt-get install build-essential python2.7-dev` .
+In order to build some dependencies, you need for sure a working building system: `sudo apt-get install build-essential python2.7-dev` .
 
 - The easiest way is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
 
