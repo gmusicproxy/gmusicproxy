@@ -53,6 +53,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 - Simon's Unofficial-Google-Music-API (the great backend used by gmusicproxy): https://github.com/simon-weber/Unofficial-Google-Music-API
 - web2py-mpd-gmproxy (a web interface that uses gmusicproxy as backend): https://github.com/matclab/web2py-mpd-gmproxy
+- GMusic-MPD (an helper script for GMusicProxy together with MPD): https://github.com/Illyism/GMusic-MPD
 
 ## Setup
 ### Requirements
