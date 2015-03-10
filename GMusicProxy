@@ -266,16 +266,32 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             # we have to download the content of all the playlists (actual API limitation)
             playlistsWithContents = self._robust_retry(lambda:api.get_all_user_playlist_contents())
             logger.debug(pprint.pformat(playlistsWithContents))
+
+            # also use own uploaded songs for playlists
+            own_songs = self._robust_retry(lambda:api.get_all_songs())
+            logger.debug(pprint.pformat(own_songs))
+
             self.wfile.write('#EXTM3U\n')
             logger.debug('generated playlist:\n#EXTM3U')
             found=False
             for playlist in playlistsWithContents:
                 if 'id' in playlist and playlist['id'] == id:
                     for track in playlist['tracks']:
-                        if 'trackId' in track and 'track' in track:
-                            line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['track']['durationMillis'])/1000) if 'durationMillis' in track['track'] else -1, '%s - ' % track['track']['artist'] if 'artist' in track['track'] else '', track['track']['title'] if 'title' in track['track'] else '', ' - %s' % track['track']['album'] if config['extended_m3u'] and 'album' in track['track'] else '', config['host'], config['port'], track['trackId'])
-                            self.wfile.write(('%s\n' % line).encode('utf-8'))
-                            logger.debug(line)
+                        if 'trackId' in track:
+                            if 'track' in track:
+                                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['track']['durationMillis'])/1000) if 'durationMillis' in track['track'] else -1, '%s - ' % track['track']['artist'] if 'artist' in track['track'] else '', track['track']['title'] if 'title' in track['track'] else '', ' - %s' % track['track']['album'] if config['extended_m3u'] and 'album' in track['track'] else '', config['host'], config['port'], track['trackId'])
+                                self.wfile.write(('%s\n' % line).encode('utf-8'))
+                                logger.debug(line)
+                            else:
+                                own_found=None
+                                for song in own_songs:
+                                    if song['id'] == track['trackId']:
+                                        own_found = song
+                                        break
+                                if own_found:
+                                    line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(own_found['durationMillis'])/1000) if 'durationMillis' in own_found else -1, '%s - ' % own_found['artist'] if 'artist' in own_found else '', own_found['title'] if 'title' in own_found else '', ' - %s' % own_found['album'] if config['extended_m3u'] and 'album' in own_found else '', config['host'], config['port'], own_found['nid'])
+                                    self.wfile.write(('%s\n' % line).encode('utf-8'))
+                                    logger.debug(line)
                     found=True
             if not found: logger.warning("Playlist not found!")
 
