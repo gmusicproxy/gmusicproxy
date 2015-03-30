@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import re
@@ -24,6 +24,6 @@ setup(
     license=open('LICENSE').read(),
     description='Google Play Music Proxy - "Let\'s stream Google Play Music using any music program"',
     long_description=(open('README.md').read()),
-    install_requires=['gmusicapi>=4.0.0', 'netifaces', 'pyxdg', 'eyed3', 'python-daemon'],
+    install_requires=['gmusicapi>=4.0.0', 'netifaces', 'pyxdg', 'eyed3>=0.7.5', 'python-daemon'],
     #dependency_links = ['https://github.com/simon-weber/Unofficial-Google-Music-API/tarball/develop#egg=gmusicapi-3.1.1-dev']
 )
