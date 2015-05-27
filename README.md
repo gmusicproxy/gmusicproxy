@@ -90,7 +90,7 @@ In order to build some dependencies, you need for sure a working building system
     sudo apt-get install python-pip python-virtualenv virtualenvwrapper
     mkvirtualenv -p /usr/bin/python2 gmusicproxy
     git clone https://github.com/diraimondo/gmusicproxy.git
-    cd gmusicproxy.git
+    cd gmusicproxy
     pip install -r requirements.txt
     ```
     note: it could be necessary to close/reopen the shell in order to use virtualenvwrapper aliases
