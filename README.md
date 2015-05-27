@@ -27,6 +27,10 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 0.9.9:
+  - fixed login problem using the devel branch (5.0.0-dev0) of gmusicapi (today not yet released)
+  - changed the installation instructions using pip `requirements.txt` file: this permits the automatic deploy of gmusicapi from github
+  - the functionality `--list-devices` is actually broken: keep a copy of you device ids!
 - 0.9.8:
   - new option `extended-m3u`: it optionally extends `#EXTINF:` lines of the produced M3U lists to a non-standard format like `artist - song title - album title`
 - 0.9.7 (2014-08-25):
@@ -68,17 +72,11 @@ In order to build some dependencies, you need for sure a working building system
 
 - The easiest way is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
 
-  ```bash
-     sudo apt-get install python-pip
-     sudo pip install https://github.com/diraimondo/gmusicproxy/tarball/master
-     GMusicProxy
-  ```
-  or you can install it from a local copy of the repository:
     - `sudo apt-get install python-pip`
     - get a copy of the sources using one of these methods:
       - `git clone https://github.com/diraimondo/gmusicproxy.git`
       - download and extract a [tar][6] or [zip][7] archive of the last version
-    - install it and all the dependencies using `sudo pip install .` from the inside of the folder
+    - install it and all the dependencies using `sudo pip install -r requirements.txt` from the inside of the folder
     - use it from everywhere: `GMusicProxy`
 
   The `pip install ...` command could require the options `--allow-external eyed3 --allow-unverified eyed3` on some systems in order to validate the installation of `eyed3`.
@@ -91,7 +89,9 @@ In order to build some dependencies, you need for sure a working building system
     ```bash
     sudo apt-get install python-pip python-virtualenv virtualenvwrapper
     mkvirtualenv -p /usr/bin/python2 gmusicproxy
-    pip install https://github.com/diraimondo/gmusicproxy/tarball/master
+    git clone https://github.com/diraimondo/gmusicproxy.git
+    cd gmusicproxy.git
+    pip install -r requirements.txt
     ```
     note: it could be necessary to close/reopen the shell in order to use virtualenvwrapper aliases
   - launch the proxy when you need it:
@@ -101,7 +101,7 @@ In order to build some dependencies, you need for sure a working building system
     GMusicProxy
     ```
   - if you need to upgrade the proxy and its dependencies:
-    - use the option `--upgrade` on the `pip` installation command (e.g., `pip install --upgrade https://...`), or
+    - use the option `--upgrade` on the `pip` installation command (e.g., `pip install --upgrade -r requirements`), or
     - clean-up the virtualenv using `deactivate ; rmvirtualenv gmusicproxy` and reinstall everything as before.
 
 ## Usage 
