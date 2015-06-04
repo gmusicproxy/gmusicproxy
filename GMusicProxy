@@ -633,7 +633,6 @@ if __name__ == '__main__':
 
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', '%s %s' % (programDescription, programVersion))]
-    opener.disable_warnings()
 
     signal.signal(signal.SIGINT, signalHandler)
 
