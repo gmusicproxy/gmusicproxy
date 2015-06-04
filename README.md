@@ -27,8 +27,10 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- 0.9.9.1 (unreleased):
-  - fixed breakage on login due to gmusicapi change on the development branch (thanks for the pull request to @Mlmlte)
+- 0.9.9.2 (2015-06-04):
+  - fixed breakage on login due to gmusicapi change (thanks for the pull request to @Mlmlte)
+  - reverted on gmusicapi 5.0.0: it was released!
+  - restored `--list-devices` functionality moving on new mobileclient `get_registered_devices` function of gmusicapi
 - 0.9.9 (2015-05-27):
   - fixed login problem using the devel branch (5.0.0-dev0) of gmusicapi (today not yet released)
   - changed the installation instructions using pip `requirements.txt` file: this permits the automatic deploy of gmusicapi from github

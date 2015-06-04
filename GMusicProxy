@@ -520,22 +520,15 @@ def getOptions(filename):
     config = vars(args)
     return config
 
-def listDevices(email, password):
-    api = gmusicapi.Webclient(debug_logging=config['debug'])
-    if config['debug']:
-        api.logger = logger
-    api.login(email, password)
-    if not api.is_authenticated():
-       logger.error('Sorry, those credentials weren\'t accepted.')
-       sys.exit(1)
+def listDevices():
     devices = api.get_registered_devices()
-    api.logout()
     if len(devices)==0:
         logger.warning('No Android phone-like devices registered in your Google account.')
     else:
+        api.logout()
         for d in devices:
-            if d['type'] == 'PHONE':
-                logger.info('- %s (%s - %s) --> device-id=%s', d['name'], d['manufacturer'], d['model'], d['id'].replace('0x',''))
+            if ( d['type'] == 'ANDROID' or d['type'] == 'IOS' ):
+                logger.info('- %s --> device-id=%s', d['friendlyName'], d['id'].replace('0x',''))
         sys.exit()
 
 def loginGM(email, password):
@@ -579,7 +572,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '0.9.9.1'
+    programVersion = '0.9.9.2'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
@@ -626,14 +619,14 @@ if __name__ == '__main__':
         logger.error('Please, specify the credentials of your Google account in the config file or on the command-line.')
         sys.exit(1)
 
-    if config['list_devices']:
-        listDevices(config['email'], config['password'])
-
     if config['device_id'] is None or len(config['device_id']) == 0:
         logger.error('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list-devices=true\' to auto-discover the IDs.')
         sys.exit(1)
 
     api = loginGM(config['email'], config['password'])
+
+    if config['list_devices']:
+        listDevices()
 
     if config['host'] == '**auto**':
         config['host'] = autodetectLocalIP()
