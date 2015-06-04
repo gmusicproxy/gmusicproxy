@@ -27,11 +27,13 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- 0.9.9:
+- 0.9.9.1 (unreleased):
+  - fixed breakage on login due to gmusicapi change on the development branch (thanks for the pull request to @Mlmlte)
+- 0.9.9 (2015-05-27):
   - fixed login problem using the devel branch (5.0.0-dev0) of gmusicapi (today not yet released)
   - changed the installation instructions using pip `requirements.txt` file: this permits the automatic deploy of gmusicapi from github
   - the functionality `--list-devices` is actually broken: keep a copy of you device ids!
-- 0.9.8:
+- 0.9.8 (2014-09-14):
   - new option `extended-m3u`: it optionally extends `#EXTINF:` lines of the produced M3U lists to a non-standard format like `artist - song title - album title`
 - 0.9.7 (2014-08-25):
   - merged a contribution by Nick Depinet to report all the possible matches of a search (support required by project CSH DJ)
