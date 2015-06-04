@@ -542,7 +542,7 @@ def loginGM(email, password):
     api = gmusicapi.Mobileclient(debug_logging=config['debug'])
     if config['debug']:
         api.logger = logger
-    api.login(email, password, config['device_id'])
+    api.login(email, password)
     if not api.is_authenticated():
        logger.error('Sorry, those credentials weren\'t accepted.')
        sys.exit(1)
