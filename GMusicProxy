@@ -523,7 +523,7 @@ def getOptions(filename):
 def listDevices():
     devices = api.get_registered_devices()
     if len(devices)==0:
-        logger.warning('No Android phone-like devices registered in your Google account.')
+        logger.warning('No Android or iOS devices registered in your Google account.')
     else:
         api.logout()
         for d in devices:
@@ -633,6 +633,7 @@ if __name__ == '__main__':
 
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', '%s %s' % (programDescription, programVersion))]
+    opener.disable_warnings()
 
     signal.signal(signal.SIGINT, signalHandler)
 
