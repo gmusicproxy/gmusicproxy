@@ -31,6 +31,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
   - finally fixed the support of uploaded tracks: now GMusicProxy can really work without a paid subscription!
   - code cleanup
   - some bugs squashing
+  - now it is possible to support the project with a small [donation][8]
 - 0.9.9.2 (2015-06-04):
   - fixed breakage on login due to gmusicapi change (thanks for the pull request to @Mlmlte)
   - reverted on gmusicapi 5.0.0: it was released!
@@ -255,6 +256,8 @@ Here a list of the supported requests (with some restricted by the availability 
 ## Support
 Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
 
+If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. This could help me to renew my All Access subscription that is strictly necessary to continue its development.
+
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
 
 ### Known problems / Ideas
@@ -277,5 +280,6 @@ The program was designed under Linux systems but it *could* work also under Wind
 [5]: https://github.com/diraimondo/gmusicproxy/pulls
 [6]: https://github.com/leoedin/gmusicproxy/archive/master.tar.gz
 [7]: https://github.com/leoedin/gmusicproxy/archive/master.zip
+[8]: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=mario%2ediraimondo%40gmail%2ecom&lc=US&item_name=GMusicProxy%20support&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
 
 ![ga tracker](https://www.google-analytics.com/collect?v=1&a=257770996&t=pageview&dl=https%3A%2F%2Fgithub.com%2Fdiraimondo%2Fgmusicproxy&ul=en-us&de=UTF-8&cid=978224512.1377738459&tid=UA-3018229-6&z=887657232 "ga tracker")
