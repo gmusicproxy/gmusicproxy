@@ -162,7 +162,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             # this more expensive method to get track info is necessary if we can't use the All Access 'get_track_info' method or if we are using the universal (uuid-style) id (necessary for uploaded tracks)
             allSongs = self._robust_retry(lambda:api.get_all_songs())
             for song in allSongs:
-                if 'nid' in song and song['nid'] == id:
+                if ( 'nid' in song and song['nid'] == id ) or ( 'id' in song and song['id'] == id ):
                     info = song.copy()
                     break
             allSongs = None
@@ -341,8 +341,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write('#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
         for track in songs:
-            if 'nid' in track:
-                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
+            if 'id' in track or 'nid' in track:
+                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['id'] if 'id' in track else track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)      
 
