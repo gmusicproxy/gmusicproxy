@@ -619,14 +619,14 @@ if __name__ == '__main__':
         logger.error('Please, specify the credentials of your Google account in the config file or on the command-line.')
         sys.exit(1)
 
-    if config['device_id'] is None or len(config['device_id']) == 0:
-        logger.error('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list-devices=true\' to auto-discover the IDs.')
-        sys.exit(1)
-
     api = loginGM(config['email'], config['password'])
 
     if config['list_devices']:
         listDevices()
+
+    if config['device_id'] is None or len(config['device_id']) == 0:
+        logger.error('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list-devices\' to auto-discover the IDs.')
+        sys.exit(1)
 
     if config['host'] == '**auto**':
         config['host'] = autodetectLocalIP()
