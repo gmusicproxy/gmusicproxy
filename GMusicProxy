@@ -157,9 +157,9 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return config['disable_all_access']
 
     def _get_song(self, id):
-        if config['disable_all_access']:
+        if config['disable_all_access'] or id[0] != 'T':
             info = None
-            # a not so nice trick: we can't use the All Access 'get_track_info' method so we have to download the complete list of all the tracks in collection to get the information about this specific track
+            # this more expensive method to get track info is necessary if we can't use the All Access 'get_track_info' method or if we are using the universal (uuid-style) id (necessary for uploaded tracks)
             allSongs = self._robust_retry(lambda:api.get_all_songs())
             for song in allSongs:
                 if 'nid' in song and song['nid'] == id:
@@ -273,7 +273,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             self.wfile.write('#EXTM3U\n')
             logger.debug('generated playlist:\n#EXTM3U')
-            found=False
+            found = False
             for playlist in playlistsWithContents:
                 if 'id' in playlist and playlist['id'] == id:
                     for track in playlist['tracks']:
@@ -283,7 +283,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                                 logger.debug(line)
                             else:
-                                own_found=None
+                                own_found = None
                                 for song in own_songs:
                                     if song['id'] == track['trackId']:
                                         own_found = song
