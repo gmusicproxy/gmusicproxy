@@ -278,4 +278,4 @@ The program was designed under Linux systems but it *could* work also under Wind
 [6]: https://github.com/leoedin/gmusicproxy/archive/master.tar.gz
 [7]: https://github.com/leoedin/gmusicproxy/archive/master.zip
 
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/0642422a568805bba9569fa9c7d83bac "githalytics.com")](http://githalytics.com/diraimondo/gmusicproxy)
+![ga tracker](https://www.google-analytics.com/collect?v=1&a=257770996&t=pageview&dl=https%3A%2F%2Fgithub.com%2Fdiraimondo%2Fgmusicproxy&ul=en-us&de=UTF-8&cid=978224512.1377738459&tid=UA-3018229-6&z=887657232 "ga tracker")
