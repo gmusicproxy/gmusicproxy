@@ -27,6 +27,10 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.0 (2015-06-12):
+  - finally fixed the support of uploaded tracks: now GMusicProxy can really work without a paid subscription!
+  - code cleanup
+  - some bugs squashing
 - 0.9.9.2 (2015-06-04):
   - fixed breakage on login due to gmusicapi change (thanks for the pull request to @Mlmlte)
   - reverted on gmusicapi 5.0.0: it was released!
