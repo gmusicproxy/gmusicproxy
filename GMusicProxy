@@ -26,6 +26,7 @@
 import BaseHTTPServer, socket, urlparse, urllib2, requests
 import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon, distutils.version
 import gmusicapi, gmusicapi.utils, eyed3.id3
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -531,6 +532,7 @@ def listDevices():
         sys.exit()
 
 def loginGM(email, password):
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     api = gmusicapi.Mobileclient(debug_logging=config['debug'])
     if config['debug']:
         api.logger = logger
