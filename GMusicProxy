@@ -194,7 +194,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             os.unlink(tempFile.name)
             self.wfile.write(tagsBin)
 
-        url = self._robust_retry(lambda:api.get_stream_url(song_id=id, device_id=config['device_id']))
+        url = self._robust_retry(lambda:api.get_stream_url(song_id=id))
         logger.debug('streaming url: %s', url)
 
         mp3 = opener.open(url)
@@ -480,7 +480,7 @@ def getOptions(filename):
     parser.add_argument('-c', '--config', type=file, help='specific configuration file to use')
     parser.add_argument('-e', '--email', help='email address of the Google account [required]')
     parser.add_argument('-p', '--password', help='password of the Google account (or an application-specific one if two-factor authentication is enabled) [required]')
-    parser.add_argument('-d', '--device-id', help='the ID of a registered Android device [required]')
+    parser.add_argument('-d', '--device-id', help='the ID of a registered Android/iOS device [default: usage of a fake-id based on mac address of network card]')
     parser.add_argument('-H', '--host', help='host in the generated URLs [default: autodetected local ip address]')
     parser.add_argument('-P', '--port', type=int, help='default TCP port to use [default: 9999]')
     parser.add_argument('-a', '--disable-all-access', default=False, action='store_true', help='disable All Access functionalities')
@@ -514,6 +514,7 @@ def getOptions(filename):
     # some defaults
     if 'host' not in configValues: configValues['host']='**auto**'
     if 'port' not in configValues: configValues['port']='9999'
+    if 'device_id' not in configValues: configValues['device_id']='**auto**'
 
     parser.set_defaults(**configValues)
     args = parser.parse_args()
@@ -531,12 +532,12 @@ def listDevices():
                 logger.info('- %s --> device-id=%s', d['friendlyName'], d['id'].replace('0x',''))
         sys.exit()
 
-def loginGM(email, password):
+def loginGM(email, password, device_id=gmusicapi.Mobileclient.FROM_MAC_ADDRESS):
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     api = gmusicapi.Mobileclient(debug_logging=config['debug'])
     if config['debug']:
         api.logger = logger
-    api.login(email, password)
+    api.login(email, password, device_id)
     if not api.is_authenticated():
        logger.error('Sorry, those credentials weren\'t accepted.')
        sys.exit(1)
@@ -573,7 +574,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.0'
+    programVersion = '1.0.1'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
@@ -620,14 +621,10 @@ if __name__ == '__main__':
         logger.error('Please, specify the credentials of your Google account in the config file or on the command-line.')
         sys.exit(1)
 
-    api = loginGM(config['email'], config['password'])
+    api = loginGM(config['email'], config['password'], gmusicapi.Mobileclient.FROM_MAC_ADDRESS if config['device_id'] == '**auto**' else config['device_id'])
 
     if config['list_devices']:
         listDevices()
-
-    if config['device_id'] is None or len(config['device_id']) == 0:
-        logger.error('Please, specify the ID of an Android device registered in your Google account in the config file or on the command-line. Use the option \'--list-devices\' to auto-discover the IDs.')
-        sys.exit(1)
 
     if config['host'] == '**auto**':
         config['host'] = autodetectLocalIP()

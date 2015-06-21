@@ -27,6 +27,9 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.1 (2015-06-21):
+  - switched on gmusicapi 6.0.0
+  - the use of a registered device ID is no longer stricly necessary but it still suggested
 - 1.0.0 (2015-06-12):
   - finally fixed the support of uploaded tracks: now GMusicProxy can really work without a paid subscription!
   - code cleanup
@@ -125,7 +128,7 @@ Here a list of the supported options on the command-line:
 
 - `--email`: email address of the Google account [required]
 - `--password`: password of the Google account [required]
-- `--device-id`: the ID of a registered Android device [required]
+- `--device-id`: the ID of a registered Android/iOS device [default: usage of a fake-id based on mac address of network card]
 - `--host`: host in the generated URLs [default: autodetected local ip address]
 - `--port`: default TCP port to use [default: 9999]
 - `--config`: specific configuration file to use
@@ -275,7 +278,7 @@ The program was designed under Linux systems but it *could* work also under Wind
 [0]: http://gmusicproxy.net/
 [1]: http://www.musicpd.org/
 [2]: http://www.videolan.org/vlc/
-[3]: https://github.com/simon-weber/Unofficial-Google-Music-API
+[3]: https://github.com/simon-weber/gmusicapi
 [4]: https://github.com/diraimondo/gmusicproxy/issues
 [5]: https://github.com/diraimondo/gmusicproxy/pulls
 [6]: https://github.com/leoedin/gmusicproxy/archive/master.tar.gz
