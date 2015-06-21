@@ -29,7 +29,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Changelog
 - 1.0.1 (2015-06-21):
   - switched on gmusicapi 6.0.0
-  - the use of a registered device ID is no longer stricly necessary but it still suggested
+  - the use of a registered device ID is no longer stricly necessary but it is still suggested
 - 1.0.0 (2015-06-12):
   - finally fixed the support of uploaded tracks: now GMusicProxy can really work without a paid subscription!
   - code cleanup
