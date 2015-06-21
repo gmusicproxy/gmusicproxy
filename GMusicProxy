@@ -529,7 +529,7 @@ def listDevices():
         api.logout()
         for d in devices:
             if ( d['type'] == 'ANDROID' or d['type'] == 'IOS' ):
-                logger.info('- %s --> device-id=%s', d['friendlyName'], d['id'].replace('0x',''))
+                logger.info('- %s --> device-id=%s', d['friendlyName'] if d['friendlyName'] is not None and len(d['friendlyName']) > 0 else '(None)', d['id'].replace('0x',''))
         sys.exit()
 
 def loginGM(email, password, device_id=gmusicapi.Mobileclient.FROM_MAC_ADDRESS):
