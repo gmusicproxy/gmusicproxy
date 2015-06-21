@@ -78,11 +78,11 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - some python libs: *gmusicapi*, *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
-The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless they work on any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
+The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless they work on any other GNU/Linux system using the right substitute of `apt-get`. It is known to work also on Mac OS X and Windows systems.
 
 In order to build some dependencies, you need for sure a working building system: `sudo apt-get install build-essential python2.7-dev` .
 
-- The easiest way is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
+- The easiest way, but not suggested, is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
 
     - `sudo apt-get install python-pip`
     - get a copy of the sources using one of these methods:
@@ -119,7 +119,7 @@ In order to build some dependencies, you need for sure a working building system
 ## Usage 
 With the service running on a computer on the LAN, it can be used by any others of the same network.
 
-To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create an application-specific password to be used with this program. Another required information is the device ID of an Android device registered in your account: you can discover it using the option `--list-devices` on the command-line.
+To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create an application-specific password to be used with this program. Another usefull information would be the device ID of an Android/iOS device registered in your account: you can discover it using the option `--list-devices` on the command-line. As default a fake-id, based on the mac address of the main network card of the server running the service, is used.
 
 You can provide such necessary information, as well as other options, on the command-line of the program or using a configuration file.
 
@@ -128,7 +128,7 @@ Here a list of the supported options on the command-line:
 
 - `--email`: email address of the Google account [required]
 - `--password`: password of the Google account [required]
-- `--device-id`: the ID of a registered Android/iOS device [default: usage of a fake-id based on mac address of network card]
+- `--device-id`: the ID of a registered Android/iOS device [default: fake-id based on mac address of network card]
 - `--host`: host in the generated URLs [default: autodetected local ip address]
 - `--port`: default TCP port to use [default: 9999]
 - `--config`: specific configuration file to use
@@ -264,15 +264,7 @@ If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
 
 ### Known problems / Ideas
-- It looks that some uploaded MP3 files not present in the GM catalog can't be streamed: to investigate.
-- Waiting for recent packaging of Simon's gmusicapi 3.0.0, I could release packages for Debian/Ubuntu systems.
-
-### Limitations
-The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
-
-As stated above, you need the device ID of a registered Android device in order to stream the music. This is a requirement of the Google API. An alternative could be to register a virtual-device using the emulator of the Android SDK.
-
-The program was designed under Linux systems but it *could* work also under Windows or Mac OS X. Reports by audacious testers are welcome!
+- The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
 
 
 [0]: http://gmusicproxy.net/

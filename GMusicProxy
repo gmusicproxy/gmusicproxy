@@ -480,7 +480,7 @@ def getOptions(filename):
     parser.add_argument('-c', '--config', type=file, help='specific configuration file to use')
     parser.add_argument('-e', '--email', help='email address of the Google account [required]')
     parser.add_argument('-p', '--password', help='password of the Google account (or an application-specific one if two-factor authentication is enabled) [required]')
-    parser.add_argument('-d', '--device-id', help='the ID of a registered Android/iOS device [default: usage of a fake-id based on mac address of network card]')
+    parser.add_argument('-d', '--device-id', help='the ID of a registered Android/iOS device [default: fake-id based on mac address of network card]')
     parser.add_argument('-H', '--host', help='host in the generated URLs [default: autodetected local ip address]')
     parser.add_argument('-P', '--port', type=int, help='default TCP port to use [default: 9999]')
     parser.add_argument('-a', '--disable-all-access', default=False, action='store_true', help='disable All Access functionalities')
