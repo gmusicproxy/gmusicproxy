@@ -88,6 +88,13 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             if self._check_aa(): return
             self._get_top_tracks_artist(id=params['id'][0], numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTopTracks)
+        elif parsedPath.path == '/get_discography_artist' and 'id' in params:
+            self.send_response(200)
+            self.send_header('Content-type', 'audio/mpegurl')
+            self.send_header('Content-disposition', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
+            self.end_headers()
+            if self._check_aa(): return
+            self._get_discography_artist(id=params['id'][0], format=params['format'][0] if 'format' in params else 'm3u', separator=params['separator'][0] if 'separator' in params else '|', onlyUrl=params['only_url'][0] if 'only_url' in params else 'no')
         elif parsedPath.path == '/get_collection':
             self.send_response(200)
             self.send_header('Content-type', 'audio/mpegurl')
@@ -318,6 +325,22 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             for track in artist['topTracks']:
                 if 'nid' in track:
                     line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
+                    self.wfile.write(('%s\n' % line).encode('utf-8'))
+                    logger.debug(line)
+    
+    def _get_discography_artist(self, id, format, separator, onlyUrl):
+        artist = self._robust_retry(lambda:api.get_artist_info(artist_id=id, include_albums=True, max_top_tracks=0, max_rel_artist=0))
+        logger.info('Getting all albums of the artist with id \'%s\' (%s) as a %s list...', id, artist['name'], 'plain-text' if format == 'text' else 'M3U')
+        logger.debug(pprint.pformat(artist))
+        if format.lower().strip() != 'text': self.wfile.write('#EXTM3U\n')
+        logger.debug('generated list:' if format.lower().strip() == 'text' else 'generated list:\n#EXTM3U')
+        if 'albums' in artist:
+            for album in artist['albums']:
+                if 'albumId' in album:
+                    if format.lower().strip() == 'text':
+                        line = '%shttp://%s:%s/get_album?id=%s' % ('%s%s%s%s' % (album['name'], separator, album['year'], separator) if ( 'name' in album and 'year' in album and onlyUrl.lower().strip() != 'yes' ) else '', config['host'], config['port'], album['albumId'])
+                    else:
+                        line = '#EXTINF:-1,%s [%s]\nhttp://%s:%s/get_album?id=%s' % (album['name'] if 'name' in album else '', album['year'] if 'year' in album else '', config['host'], config['port'], album['albumId'])
                     self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
     
@@ -574,7 +597,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.1'
+    programVersion = '1.0.2'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []

@@ -27,6 +27,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.2 (2015-07-16):
+  - added possibility to get the full discography of a specified artist using `get_discography_artist` (thanks to e-matterson for the idea and an attempted implementation)
 - 1.0.1 (2015-06-21):
   - switched on gmusicapi 6.0.0
   - the use of a registered device ID is no longer stricly necessary but it is still suggested
@@ -217,6 +219,12 @@ Here a list of the supported requests (with some restricted by the availability 
      - `id`: the unique identifier of the artist [required]
      - `type`: the type of id specified among `artist`, `album` and `song` [required]
      - `num_tracks`: the number of top songs to return [default: 20]
+- `/get_discography_artist`: reports the list of available albums of a specified artist as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one album per line)  [requires A.A.].
+  Allowed parameters:
+     - `id`: the unique identifier of the artist [required]
+     - `format`: `m3u` for an M3U list or `text` for a plain-text list with lines like `Name of Album|Year|URL to an M3U playlist` [default: `m3u`]
+     - `separator`: a separator for the plain-text lists [default: `|`]
+     - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the album is totally omitted) [default: `no`]
 - `/like_song`: reports a positive rating on the song with specified id.
   Allowed parameters:
      - `id`: the unique identifier of the song [required]
