@@ -23,7 +23,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - create persistent URLs to all the tracks, albums and stations available on the Google Play Music + All Access platform
 - get access to all the songs in your collection, playlists and registered stations
 - search by name any artist, album or song
-- request a transient (it will be not registered in your account) station based on any search
+- request a transient (it will be not registered in your account) station based on any search (a.k.a. "Instant Mix")
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
@@ -182,7 +182,7 @@ Here a list of the supported requests (with some restricted by the availability 
      - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
 - `/get_all_playlists`: reports the playlists registered in the account as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one playlist per line).
   The allowed parameters are the same as `/get_all_stations`.
-- `/get_new_station_by_search`: reports as M3U playlist the content of a new (transient or permanent) station created on the result of a search for artist/album/song [requires A.A.].
+- `/get_new_station_by_search`: reports as M3U playlist the content of a new (transient or permanent) station created on the result of a search for artist/album/song (a.k.a. "Instant Mix") [requires A.A.].
   Allowed parameters:
      - `type`: search for `artist`, `album` or `song` [required]
      - `title`: a string to search in the title of the album or of the song
