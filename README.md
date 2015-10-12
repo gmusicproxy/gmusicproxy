@@ -269,7 +269,7 @@ Here a list of the supported requests (with some restricted by the availability 
 ## Support
 Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
 
-If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. This could help me to renew my All Access subscription that is strictly necessary to continue its development.
+If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. The access to an All Access subscription is strictly necessary to continue its development: it would be great if someone using a multi-devices GPM subscription could donate an access to me.
 
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
 
