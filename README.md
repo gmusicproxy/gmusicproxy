@@ -27,6 +27,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- unreleased:
+  - bump `gmusicapi` requirement to 7.0.0 to fix validation errors
 - 1.0.2 (2015-07-16):
   - added possibility to get the full discography of a specified artist using `get_discography_artist` (thanks to e-matterson for the idea and an attempted implementation)
 - 1.0.1 (2015-06-21):
