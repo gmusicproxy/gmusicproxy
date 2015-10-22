@@ -36,82 +36,48 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         params=urlparse.parse_qs(parsedPath.query)
 
         if parsedPath.path == '/get_song' and 'id' in params:
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpeg')
-            self.send_header('Content-disposition', 'inline; filename=%s.mp3' % params['id'][0].strip())
-            self.end_headers()
+            self._send_headers(200, 'audio/mpeg', 'inline; filename=%s.mp3' % params['id'][0].strip())
             self._get_song(id=params['id'][0])
         elif parsedPath.path == '/get_all_stations':
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
             if self._check_aa(): return
             self._get_all_stations(format=params['format'][0] if 'format' in params else 'm3u', separator=params['separator'][0] if 'separator' in params else '|', onlyUrl=params['only_url'][0] if 'only_url' in params else 'no')
         elif parsedPath.path == '/get_all_playlists':
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
             self._get_all_playlists(format=params['format'][0] if 'format' in params else 'm3u', separator=params['separator'][0] if 'separator' in params else '|', onlyUrl=params['only_url'][0] if 'only_url' in params else 'no')
         elif parsedPath.path == '/get_station' and 'id' in params:
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             if self._check_aa(): return
             self._get_station(id=params['id'][0], numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation)
         elif parsedPath.path == '/get_ifl_station':
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             if self._check_aa(): return
             self._get_station(id='IFL', numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation)
         elif parsedPath.path == '/get_playlist' and 'id' in params:
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             self._get_playlist(id=params['id'][0])
         elif parsedPath.path == '/get_album' and 'id' in params:
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             if self._check_aa(): return
             self._get_album(id=params['id'][0])
         elif parsedPath.path == '/get_top_tracks_artist' and 'id' in params:
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             if self._check_aa(): return
             self._get_top_tracks_artist(id=params['id'][0], numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTopTracks)
         elif parsedPath.path == '/get_discography_artist' and 'id' in params:
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
             if self._check_aa(): return
             self._get_discography_artist(id=params['id'][0], format=params['format'][0] if 'format' in params else 'm3u', separator=params['separator'][0] if 'separator' in params else '|', onlyUrl=params['only_url'][0] if 'only_url' in params else 'no')
         elif parsedPath.path == '/get_collection':
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             self._get_collection()
         elif parsedPath.path == '/search_id' and 'type' in params and ('title' in params or 'artist' in params):
-            self.send_response(200)
-            self.end_headers()
+            self._send_headers(200)
             if self._check_aa(): return
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'yes')
             if result: self.wfile.write(result)
         elif parsedPath.path == '/get_by_search' and 'type' in params and ('title' in params or 'artist' in params):
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpeg' if ('type' in params and params['type'][0].lower().strip() == 'song') else 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=%s' % 'track.mp3' if ('type' in params and params['type'][0].lower().strip() == 'song') else 'playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpeg' if ('type' in params and params['type'][0].lower().strip() == 'song') else 'audio/mpegurl', 'inline; filename=%s' % 'track.mp3' if ('type' in params and params['type'][0].lower().strip() == 'song') else 'playlist.m3u')
             if self._check_aa(): return
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no', max_results=params['num_tracks'][0] if 'num_tracks' in params else None)
             if result and len(result)>0:
@@ -124,20 +90,14 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 elif params['type'][0].lower().strip() =='matches':
                     self._get_matches(result, numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTopTracks)
         elif parsedPath.path == '/get_new_station_by_id' and 'id' in params and 'type' in params:
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             if self._check_aa(): return
             if 'transient' in params and params['transient'][0].lower().strip() == 'no' and ('name' not in params or len(params['name'][0])==0):
                 logger.warning('A new persistent station requires a name!')
                 return
             self._get_new_station(id=params['id'][0], type=params['type'][0].lower().strip(), numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation, transient=params['transient'][0].lower().strip() if 'transient' in params else 'yes', name=params['name'][0] if 'name' in params else transientStationName)
         elif parsedPath.path == '/get_new_station_by_search' and 'type' in params and ('title' in params or 'artist' in params):
-            self.send_response(200)
-            self.send_header('Content-type', 'audio/mpegurl')
-            self.send_header('Content-disposition', 'inline; filename=playlist.m3u')
-            self.end_headers()
+            self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             if self._check_aa(): return
             if 'transient' in params and params['transient'][0].lower().strip() == 'no' and ('name' not in params or len(params['name'][0])==0):
                 logger.warning('A new persistent station requires a name!')
@@ -146,18 +106,24 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if result and len(result)>0:
                 self._get_new_station(id=result, type=params['type'][0].lower().strip(), numTracks=params['num_tracks'][0] if 'num_tracks' in params else defaultNumberTracksStation, transient=params['transient'][0].lower().strip() if 'transient' in params else 'yes', name=params['name'][0] if 'name' in params else transientStationName)
         elif parsedPath.path == '/like_song' and 'id' in params:
-            self.send_response(200)
-            self.end_headers()
+            self._send_headers(200)
             self._rate_song(id=params['id'][0], rating=5)
         elif parsedPath.path == '/dislike_song' and 'id' in params:
-            self.send_response(200)
-            self.end_headers()
+            self._send_headers(200)
             self._rate_song(id=params['id'][0], rating=1)
         else:
-            self.send_response(500)
-            self.end_headers()
+            self._send_headers(500)
             logger.warning('Unknown command \'%s\' or missing required parameter!', parsedPath.path)
         return
+
+    def _send_headers(self, response_code = 200, content_type = None, content_disposition = None):
+        self.send_response(response_code)
+        if content_type:
+            self.send_header('Content-type', content_type)
+        if content_disposition:
+            self.send_header('Content-disposition', content_disposition)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
 
     def _check_aa(self):
         if config['disable_all_access']:

@@ -28,6 +28,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 ### Changelog
 - unreleased:
+  - added `Access-Control-Allow-Origin: *` header to allow web-pages to interact with GMusicProxy API
   - bump `gmusicapi` requirement to 7.0.0 to fix validation errors
 - 1.0.2 (2015-07-16):
   - added possibility to get the full discography of a specified artist using `get_discography_artist` (thanks to e-matterson for the idea and an attempted implementation)
