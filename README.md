@@ -75,8 +75,9 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - Simon's Unofficial-Google-Music-API (the great backend used by gmusicproxy): https://github.com/simon-weber/gmusicapi
 - web2py-mpd-gmproxy (a web interface that uses gmusicproxy as backend): https://github.com/matclab/web2py-mpd-gmproxy
 - GMusic-MPD (an helper script for GMusicProxy together with MPD): https://github.com/Illyism/GMusic-MPD
-- gmproxy-scripts (Helper scripts for working with GMusicProxy): https://github.com/kmac/gmproxy-scripts
-- gpmplay (A bash script to easily search with GMusicproxy): https://github.com/onespaceman/gmpplay
+- gmproxy-scripts (helper scripts for working with GMusicProxy): https://github.com/kmac/gmproxy-scripts
+- gpmplay (a bash script to easily search with GMusicproxy): https://github.com/onespaceman/gmpplay
+- g-music (Emacs client for gmusicproxy and mpd): https://github.com/bodicsek/g-music
 
 ## Setup
 ### Requirements
