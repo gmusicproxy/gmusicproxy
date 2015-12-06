@@ -30,6 +30,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - unreleased:
   - added `Access-Control-Allow-Origin: *` header to allow web-pages to interact with GMusicProxy API
   - bump `gmusicapi` requirement to 7.0.0 to fix validation errors
+  - fix in documentation
 - 1.0.2 (2015-07-16):
   - added possibility to get the full discography of a specified artist using `get_discography_artist` (thanks to e-matterson for the idea and an attempted implementation)
 - 1.0.1 (2015-06-21):
@@ -172,7 +173,7 @@ Here a list of the supported requests (with some restricted by the availability 
      - `type`: search for `artist`, `album` or `song` [required]
      - `title`: a string to search in the title of the album or of the song
      - `artist`: a string to search in the name of the artist in any kind of search
-     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `yes`]
 - `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song); it is also possible to get the full list of matches reported by Google Music using search with `type=matches` [requires A.A.].
   Allowed parameters:
      - `type`: search for `artist`, `album`, `song` or `matches` [required]
