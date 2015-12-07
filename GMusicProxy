@@ -598,6 +598,9 @@ if __name__ == '__main__':
     ## preliminar setup for the daemonaization
     if config['daemon']:
         contextDaemon = daemon.DaemonContext(files_preserve=[])
+        # python-daemon>=2.1 has initgroups=True by default but it requires root privs
+        # older versions don't support initgroups as constructor parameter so we set it manually instead
+        contextDaemon.initgroups = False
         if fileHandler:
             contextDaemon.files_preserve.append(fileHandler.stream)
         consoleHandler.setLevel(logging.ERROR)
