@@ -81,6 +81,23 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - gpmplay (a bash script to easily search with GMusicproxy): https://github.com/onespaceman/gmpplay
 - g-music (Emacs client for gmusicproxy and mpd): https://github.com/bodicsek/g-music
 
+## Support
+### Donations
+Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
+
+The access to an All Access subscription is strictly necessary to continue its development: in the last months I've scarcely used this service. At the moment I'm keeping the subscription to be able to maintain the project. I could stop it in the next months. 
+
+If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. For sake of transparency I will report the amount of donations I receive each year and the percentage of Google Play Music subscription fees you are covering (8€ per month as early subscriber) with them.
+
+- year 2015: 15€ on 96€
+- year 2016: 5€ on 96€
+
+### Issues
+Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
+
+### Known problems / Ideas
+- The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
+
 ## Setup
 ### Requirements
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
@@ -271,16 +288,6 @@ Here a list of the supported requests (with some restricted by the availability 
   ```bash
   curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes' | sort -R | head -n1 | vlc -
   ```
-
-## Support
-Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
-
-If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. The access to an All Access subscription is strictly necessary to continue its development: it would be great if someone using a multi-devices GPM subscription could donate an access to me.
-
-Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
-
-### Known problems / Ideas
-- The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
 
 
 [0]: http://gmusicproxy.net/
