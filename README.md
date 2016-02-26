@@ -27,6 +27,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.4 (unreleased):
+  - implemented a RAM-based cache for songs list: it speeds-up song streaming only if AA service is disabled
 - 1.0.3 (2015-12-07):
   - added `Access-Control-Allow-Origin: *` header to allow web-pages to interact with GMusicProxy API
   - bump `gmusicapi` requirement to 7.0.0 to fix validation errors
