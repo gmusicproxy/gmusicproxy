@@ -29,6 +29,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Changelog
 - 1.0.4 (unreleased):
   - implemented a RAM-based cache for songs list: it speeds-up song streaming only if AA service is disabled
+  - implemented the automatic increment of the playcounts of the fetched songs; the previous behavior can be restored with option `disable-playcount-increment`
 - 1.0.3 (2015-12-07):
   - added `Access-Control-Allow-Origin: *` header to allow web-pages to interact with GMusicProxy API
   - bump `gmusicapi` requirement to 7.0.0 to fix validation errors
@@ -168,6 +169,7 @@ Here a list of the supported options on the command-line:
 - `--daemon`: daemonize the program
 - `--disable-version-check`: disable check for latest available version
 - `--extended-m3u`: enable non-standard extended m3u headers
+- `--disable-playcount-increment`: disable the automatic increment of playcounts upon song fetch
 
 ### Config file
 All the command-line options can be specified in a configuration file. An example of configuration with the strictly required options could look like this:

@@ -190,6 +190,10 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.wfile.write(block)
             block = mp3.read(downloadBlockSize)
 
+        if not config['disable_playcount_increment']:
+            logger.info('Increment playcount')
+            self._robust_retry(lambda:api.increment_song_playcount(song_id=id))
+
     def _get_all_stations(self, format, separator, onlyUrl):
         logger.info('Getting all stations as plain-text list...' if format == 'text' else 'Getting all stations as M3U list...')
         stations = self._robust_retry(lambda:api.get_all_stations())
@@ -493,6 +497,7 @@ def getOptions(filename):
     parser.add_argument('-f', '--daemon', default=False, action='store_true', help='daemonize the program')
     parser.add_argument('-v', '--disable-version-check', default=False, action='store_true', help='disable check for latest available version')
     parser.add_argument('-x', '--extended-m3u', default=False, action='store_true', help='enable non-standard extended m3u headers')
+    parser.add_argument('-C', '--disable-playcount-increment', default=False, action='store_true', help='disable the automatic increment of playcounts upon song fetch')
 
     config = ConfigParser.SafeConfigParser()
     args = parser.parse_args()
@@ -513,6 +518,7 @@ def getOptions(filename):
     if 'disable-all-access' in configValues: configValues['disable_all_access'] = configValues.pop('disable-all-access')
     if 'disable-version-check' in configValues: configValues['disable_version_check'] = configValues.pop('disable-version-check')
     if 'extended-m3u' in configValues: configValues['extended_m3u'] = configValues.pop('extended-m3u')
+    if 'disable-playcount-increment' in configValues: configValues['disable_playcount_increment'] = configValues.pop('disable-playcount-increment')
 
     # some defaults
     if 'host' not in configValues: configValues['host']='**auto**'
