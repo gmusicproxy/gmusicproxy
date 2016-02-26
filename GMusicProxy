@@ -130,16 +130,30 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             logger.warning('This functionality requires an All Access subscription!')
         return config['disable_all_access']
 
+    def _fetch_songs_list_cache(self):
+        logger.debug('Fetching list of songs in collection')
+        self.server.allSongsCache = self._robust_retry(lambda:api.get_all_songs())
+
     def _get_song(self, id):
         if config['disable_all_access'] or id[0] != 'T':
             info = None
             # this more expensive method to get track info is necessary if we can't use the All Access 'get_track_info' method or if we are using the universal (uuid-style) id (necessary for uploaded tracks)
-            allSongs = self._robust_retry(lambda:api.get_all_songs())
-            for song in allSongs:
-                if ( 'nid' in song and song['nid'] == id ) or ( 'id' in song and song['id'] == id ):
-                    info = song.copy()
+            # I try to mitigate the fetch cost using a RAM-based cache
+            if not hasattr(self.server, 'allSongsCache'):
+                self._fetch_songs_list_cache()
+            refetchOnFailure = True
+            while True:
+                for song in self.server.allSongsCache:
+                    if ( 'nid' in song and song['nid'] == id ) or ( 'id' in song and song['id'] == id ):
+                        info = song.copy()
+                        refetchOnFailure = False
+                        break
+                if info is None and refetchOnFailure:
+                    logger.debug('Look-up failure in cache for track info, refetching!')
+                    self._fetch_songs_list_cache()
+                    refetchOnFailure = False
+                else:
                     break
-            allSongs = None
         else:
             info = self._robust_retry(lambda:api.get_track_info(store_track_id=id))
         if info is None:
@@ -631,6 +645,10 @@ if __name__ == '__main__':
 
     server = BaseHTTPServer.HTTPServer(('0.0.0.0', config['port']), GetHandler)
     logger.info('Listening on port %s...', config['port'])
+
+    if config['disable_all_access']:
+        logger.info('All Access disabled: pre-fetching list of songs in collection')
+        server.allSongsCache = api.get_all_songs()
 
     if config['daemon']:
         contextDaemon.files_preserve.append(server.fileno())
