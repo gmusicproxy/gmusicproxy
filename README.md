@@ -28,7 +28,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 ### Changelog
 - 1.0.4 (unreleased):
-  - implemented a RAM-based cache for songs list: it speeds-up song streaming only if AA service is disabled
+  - implemented a RAM-based cache for songs list: it speeds-up streaming of songs in collection or if AA is disabled
   - implemented the automatic increment of the playcounts of the fetched songs; the previous behavior can be restored with option `disable-playcount-increment`
 - 1.0.3 (2015-12-07):
   - added `Access-Control-Allow-Origin: *` header to allow web-pages to interact with GMusicProxy API

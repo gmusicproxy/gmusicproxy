@@ -137,7 +137,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def _get_song(self, id):
         if config['disable_all_access'] or id[0] != 'T':
             info = None
-            # this more expensive method to get track info is necessary if we can't use the All Access 'get_track_info' method or if we are using the universal (uuid-style) id (necessary for uploaded tracks)
+            # this more expensive method to get track info is necessary if we can't use the All Access 'get_track_info' method or if we are using the universal (uuid-style) id (tracks in collection)
             # I try to mitigate the fetch cost using a RAM-based cache
             if not hasattr(self.server, 'allSongsCache'):
                 self._fetch_songs_list_cache()
@@ -650,11 +650,11 @@ if __name__ == '__main__':
         checkLatestVersion()
 
     server = BaseHTTPServer.HTTPServer(('0.0.0.0', config['port']), GetHandler)
-    logger.info('Listening on port %s...', config['port'])
 
-    if config['disable_all_access']:
-        logger.info('All Access disabled: pre-fetching list of songs in collection')
-        server.allSongsCache = api.get_all_songs()
+    logger.info('Pre-fetching list of songs in collection')
+    server.allSongsCache = api.get_all_songs()
+
+    logger.info('Listening on port %s...', config['port'])
 
     if config['daemon']:
         contextDaemon.files_preserve.append(server.fileno())
