@@ -27,6 +27,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.5 (unreleased):
+  - send to the client the effective song size: this should allow the player (VLC) to properly show the progress of the playback
 - 1.0.4 (2016-02-27):
   - implemented a RAM-based cache for songs list: it speeds-up streaming of songs in collection or if AA is disabled
   - implemented the automatic increment of the playcounts of the fetched songs; the previous behavior can be restored with option `disable-playcount-increment`

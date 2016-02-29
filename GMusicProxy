@@ -36,7 +36,6 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         params=urlparse.parse_qs(parsedPath.query)
 
         if parsedPath.path == '/get_song' and 'id' in params:
-            self._send_headers(200, 'audio/mpeg', 'inline; filename=%s.mp3' % params['id'][0].strip())
             self._get_song(id=params['id'][0])
         elif parsedPath.path == '/get_all_stations':
             self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.%s' % 'txt' if ('format' in params and params['format'][0].lower().strip() == 'text') else 'm3u')
@@ -77,8 +76,9 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'yes')
             if result: self.wfile.write(result)
         elif parsedPath.path == '/get_by_search' and 'type' in params and ('title' in params or 'artist' in params):
-            self._send_headers(200, 'audio/mpeg' if ('type' in params and params['type'][0].lower().strip() == 'song') else 'audio/mpegurl', 'inline; filename=%s' % 'track.mp3' if ('type' in params and params['type'][0].lower().strip() == 'song') else 'playlist.m3u')
             if self._check_aa(): return
+            if ('type' in params and params['type'][0].lower().strip() != 'song'):
+                self._send_headers(200, 'audio/mpegurl', 'playlist.m3u')
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no', max_results=params['num_tracks'][0] if 'num_tracks' in params else None)
             if result and len(result)>0:
                 if params['type'][0].lower().strip() == 'artist':
@@ -116,12 +116,14 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             logger.warning('Unknown command \'%s\' or missing required parameter!', parsedPath.path)
         return
 
-    def _send_headers(self, response_code = 200, content_type = None, content_disposition = None):
+    def _send_headers(self, response_code = 200, content_type = None, content_disposition = None, content_length = None):
         self.send_response(response_code)
         if content_type:
-            self.send_header('Content-type', content_type)
+            self.send_header('Content-Type', content_type)
         if content_disposition:
-            self.send_header('Content-disposition', content_disposition)
+            self.send_header('Content-Disposition', content_disposition)
+        if content_length:
+            self.send_header('Content-Length', content_length)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
@@ -158,6 +160,9 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             info = self._robust_retry(lambda:api.get_track_info(store_track_id=id))
         if info is None:
             logger.info('Streaming song with id \'%s\'', id)
+            tagsBin = None
+            tagsSize = 0
+            songSize = 0
         else:
             logger.info('Streaming song with id \'%s\': %s - %s', id, info['artist'], info['title'])
             logger.debug(pprint.pformat(info))
@@ -173,16 +178,26 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if 'albumArtRef' in info:
                 albumArt = opener.open(info['albumArtRef'][0]['url']).read()
                 tags.images.set(3, albumArt, "image/jpeg")
+            if 'estimatedSize' in info:
+                songSize = int(info['estimatedSize'])
+            else:
+                songSize = 0
             # weird hack: write the id3 tag on a temporary file and reload it (no way to render it on memory...)
             tempFile = tempfile.NamedTemporaryFile(delete=False)
             tags.save(tempFile.name)
             tagsBin = tempFile.read()
+            tagsSize = len(tagsBin)
             tempFile.close()
             os.unlink(tempFile.name)
-            self.wfile.write(tagsBin)
 
         url = self._robust_retry(lambda:api.get_stream_url(song_id=id))
         logger.debug('streaming url: %s', url)
+
+        # hack: the reported size of the song is, in my tests, always 28 bytes bigger than the effective content
+        self._send_headers(200, 'audio/mpeg', 'inline; filename=%s.mp3' % 'id'.strip(), (tagsSize + songSize - 28) if (songSize > 0) else None)
+
+        if tagsBin:
+            self.wfile.write(tagsBin)
 
         mp3 = opener.open(url)
         block = mp3.read(downloadBlockSize)
@@ -583,7 +598,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.4'
+    programVersion = '1.0.5'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
