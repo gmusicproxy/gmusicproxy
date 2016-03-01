@@ -580,16 +580,18 @@ def autodetectLocalIP():
 
 def checkLatestVersion():
     logger.debug('Fetching lastest version of %s...', programName)
-    latestVersion = opener.open(urlLatestVersion).read()
-    logger.debug('latest available version: %s', latestVersion)
-    logger.debug('installed version: %s', programVersion)
     try:
+        latestVersion = opener.open(urlLatestVersion).read()
+        logger.debug('latest available version: %s', latestVersion)
+        logger.debug('installed version: %s', programVersion)
         if latestVersion == '':
             raise ValueError
         if distutils.version.StrictVersion(programVersion) < distutils.version.StrictVersion(latestVersion):
             logger.warning('There is a new %s release of %s. Consider the idea to update your installation in order to keep it working!\n', latestVersion, programName)
+    except urllib2.URLError:
+        logger.debug('Error in fetching version information')
     except ValueError:
-        logger.debug('Error in fetching version information or malformed data (\'%s\', \'%s\')', latestVersion, programVersion)
+        logger.debug('Error on malformed version data (\'%s\', \'%s\')', latestVersion, programVersion)
 
 if __name__ == '__main__':
     downloadBlockSize = 40*1024
