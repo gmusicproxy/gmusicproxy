@@ -96,7 +96,7 @@ The access to an All Access subscription is strictly necessary to continue its d
 If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. For sake of transparency I will report the amount of donations I receive each year and the percentage of Google Play Music subscription fees you are covering (8€ per month as early subscriber) with them:
 
 - year 2015: 15€ on 96€ ![Progress](http://progressed.io/bar/15?scale=96&suffix=€)
-- year 2016: 25€ on 96€ ![Progress](http://progressed.io/bar/25?scale=96&suffix=€)
+- year 2016: 42€ on 96€ ![Progress](http://progressed.io/bar/42?scale=96&suffix=€)
 
 ### Issues
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
