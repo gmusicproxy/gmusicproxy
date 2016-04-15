@@ -7,6 +7,7 @@ site: http://gmusicproxy.net
 
 contributors:
 - [Nick Depinet](mailto:depinetnick@gmail.com)
+- [Adam Prato](mailto:adam.prato@gmail.com)
 
 License: **GPL v3**
 
@@ -30,6 +31,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - 1.0.5 (unreleased):
   - send to the client the effective song size: this should allow the player (VLC) to properly show the progress of the playback
   - make HTTP connection for version control more robust: not fatal on error (my HTTP server is down: sorry!)
+  - new support to the Shoutcast metadata protocol: at the moment alternative to the IDv3 tag supporto, so disabled by default (thanks to Adam Prato)
 - 1.0.4 (2016-02-27):
   - implemented a RAM-based cache for songs list: it speeds-up streaming of songs in collection or if AA is disabled
   - implemented the automatic increment of the playcounts of the fetched songs; the previous behavior can be restored with option `disable-playcount-increment`
@@ -91,7 +93,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Donations
 Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
 
-The access to an All Access subscription is strictly necessary to continue its development: in the last months I've scarcely used this service. At the moment I'm keeping the subscription to be able to maintain the project. I could stop it in the next months. 
+The access to an All Access subscription is strictly necessary to continue its development: in the last months I've scarcely used this service. At the moment I'm keeping the subscription to be able to maintain the project. I could stop it in the next months.
 
 If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. For sake of transparency I will report the amount of donations I receive each year and the percentage of Google Play Music subscription fees you are covering (8€ per month as early subscriber) with them:
 
@@ -149,7 +151,7 @@ In order to build some dependencies, you need for sure a working building system
     - use the option `--upgrade` on the `pip` installation command (e.g., `pip install --upgrade -r requirements`), or
     - clean-up the virtualenv using `deactivate ; rmvirtualenv gmusicproxy` and reinstall everything as before.
 
-## Usage 
+## Usage
 With the service running on a computer on the LAN, it can be used by any others of the same network.
 
 To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create an application-specific password to be used with this program. Another usefull information would be the device ID of an Android/iOS device registered in your account: you can discover it using the option `--list-devices` on the command-line. As default a fake-id, based on the mac address of the main network card of the server running the service, is used.
@@ -172,6 +174,7 @@ Here a list of the supported options on the command-line:
 - `--daemon`: daemonize the program
 - `--disable-version-check`: disable check for latest available version
 - `--extended-m3u`: enable non-standard extended m3u headers
+- `--shoutcast-metadata`: enable Shoutcast metadata protocol support (disabling IDv3 tags)
 - `--disable-playcount-increment`: disable the automatic increment of playcounts upon song fetch
 
 ### Config file
@@ -188,7 +191,7 @@ When the proxy is launched, it searches for a file named `gmusicproxy.cfg` in th
 ### URL-based interface
 The only way to use the service is to query the proxy by means of properly formatted HTTP requests over the configured TCP port. Such URLs can be used directly in music programs or in scripts or in any browser. A URL looks like this: `http://host:port/command?param_1=value&param_2=value`. I don't apply any validation to the submitted values: please, be nice with the proxy and don't exploit it! :)
 
-Consider that any song, album, artist, playlist or station got a unique ID in Google Music API but there are many methods to discover them. 
+Consider that any song, album, artist, playlist or station got a unique ID in Google Music API but there are many methods to discover them.
 
 Here a list of the supported requests (with some restricted by the availability of a All Access subscription):
 
@@ -274,12 +277,12 @@ Here a list of the supported requests (with some restricted by the availability 
   mpc load queen
   mpc play
   ```
-  
+
 - You can also request a fresh list of songs from a station and add them to the current playlist.
 
   ```bash
   mpc clear
-  curl -s 'http://localhost:9999/get_new_station_by_search?type=artist&artist=Queen&num_tracks=100' | 
+  curl -s 'http://localhost:9999/get_new_station_by_search?type=artist&artist=Queen&num_tracks=100' |
     grep -v ^# | while read url; do mpc add "$url"; done
   mpc play
   ```

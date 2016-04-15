@@ -116,7 +116,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             logger.warning('Unknown command \'%s\' or missing required parameter!', parsedPath.path)
         return
 
-    def _send_headers(self, response_code = 200, content_type = None, content_disposition = None, content_length = None):
+    def _send_headers(self, response_code = 200, content_type = None, content_disposition = None, content_length = None, icy_metaint = None):
         self.send_response(response_code)
         if content_type:
             self.send_header('Content-Type', content_type)
@@ -124,6 +124,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-Disposition', content_disposition)
         if content_length:
             self.send_header('Content-Length', content_length)
+        if icy_metaint:
+            self.send_header('icy-metaint', icy_metaint)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
@@ -135,6 +137,16 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def _fetch_songs_list_cache(self):
         logger.debug('Fetching list of songs in collection')
         self.server.allSongsCache = self._robust_retry(lambda:api.get_all_songs())
+
+    def _icy_metadata(self, album = None, artist = None, title = None):
+        streamtitle = title
+        if artist:
+            streamtitle = '%s / %s' % (artist, streamtitle)
+        if album:
+            streamtitle = '%s / %s' % (album, streamtitle)
+        text = 'StreamTitle=\'%ss\';' % (streamtitle)
+        metadata = (chr(len(text)) + text).ljust(len(text) * 16 + 1, chr(0))
+        return metadata.encode('ascii')
 
     def _get_song(self, id):
         if config['disable_all_access'] or id[0] != 'T':
@@ -169,7 +181,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             tags = eyed3.id3.Tag()
             if 'artist' in info: tags.artist = info['artist']
             if 'albumArtist' in info and 'album_artist' in dir(tags): ## extra check for support of 'album_artist' by eyed3: https://bitbucket.org/nicfit/eyed3/commits/9071bba4977f
-                tags.album_artist = info['albumArtist']  
+                tags.album_artist = info['albumArtist']
             if 'album' in info: tags.album = info['album']
             if 'title' in info: tags.title = info['title']
             if 'trackNumber' in info: tags.track_num = info['trackNumber']
@@ -193,16 +205,20 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         url = self._robust_retry(lambda:api.get_stream_url(song_id=id))
         logger.debug('streaming url: %s', url)
 
-        # hack: the reported size of the song is, in my tests, always 28 bytes bigger than the effective content
-        self._send_headers(200, 'audio/mpeg', 'inline; filename=%s.mp3' % 'id'.strip(), (tagsSize + songSize - 28) if (songSize > 0) else None)
+        do_shoutcast = config['shoutcast_metadata'] and 'icy-metadata' in self.headers
 
-        if tagsBin:
+        # hack: the reported size of the song is, in my tests, always 28 bytes bigger than the effective content
+        self._send_headers(200, 'audio/mpeg', 'inline; filename=%s.mp3' % 'id'.strip(), ((tagsSize if not do_shoutcast else 0) + songSize - 28) if (songSize > 0) else None, downloadBlockSize if do_shoutcast else None)
+
+        if tagsBin and not do_shoutcast:
             self.wfile.write(tagsBin)
 
         mp3 = opener.open(url)
         block = mp3.read(downloadBlockSize)
         while len(block) > 0:
             self.wfile.write(block)
+            if do_shoutcast:
+                self.wfile.write(self._icy_metadata(tags.album, tags.artist, tags.title))
             block = mp3.read(downloadBlockSize)
 
         if not config['disable_playcount_increment']:
@@ -255,7 +271,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         stationId = api.create_station(name=name, track_id=id if type == 'song' else None, artist_id=id if type == 'artist' else None, album_id=id if type == 'album' else None)  ## by genre: TO DO
         if transient != 'no': transientStationIds.append(stationId)
         station = self._robust_retry(lambda:api.get_station_tracks(station_id=stationId, num_tracks=numTracks))
-        if transient != 'no': 
+        if transient != 'no':
             self._robust_retry(lambda:api.delete_stations(stationId))
             transientStationIds.remove(stationId)
         logger.info('Getting %s tracks from a new %s station based on %s id \'%s\'' % (numTracks, 'transient' if transient != 'no' else 'persistent', type, id))
@@ -326,7 +342,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
                     self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
-    
+
     def _get_discography_artist(self, id, format, separator, onlyUrl):
         artist = self._robust_retry(lambda:api.get_artist_info(artist_id=id, include_albums=True, max_top_tracks=0, max_rel_artist=0))
         logger.info('Getting all albums of the artist with id \'%s\' (%s) as a %s list...', id, artist['name'], 'plain-text' if format == 'text' else 'M3U')
@@ -342,7 +358,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         line = '#EXTINF:-1,%s [%s]\nhttp://%s:%s/get_album?id=%s' % (album['name'] if 'name' in album else '', album['year'] if 'year' in album else '', config['host'], config['port'], album['albumId'])
                     self.wfile.write(('%s\n' % line).encode('utf-8'))
                     logger.debug(line)
-    
+
     def _get_matches(self, matches, numTracks):
         self.wfile.write('#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
@@ -366,7 +382,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if 'id' in track or 'nid' in track:
                 line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['id'] if 'id' in track else track['nid'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
-                logger.debug(line)      
+                logger.debug(line)
 
     def _search(self, type, query_title, query_artist, exact, max_results=None):
         if type is None or type not in ['artist', 'song', 'album', 'matches']:
@@ -461,7 +477,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             logger.debug(pprint.pformat(info))
             info['rating'] = rating
             self._robust_retry(lambda:api.change_song_metadata([info]))
-    
+
     @gmusicapi.utils.utils.retry(retry_exception=requests.exceptions.ConnectionError)
     def _robust_retry(self, func):
         return func()
@@ -512,6 +528,7 @@ def getOptions(filename):
     parser.add_argument('-f', '--daemon', default=False, action='store_true', help='daemonize the program')
     parser.add_argument('-v', '--disable-version-check', default=False, action='store_true', help='disable check for latest available version')
     parser.add_argument('-x', '--extended-m3u', default=False, action='store_true', help='enable non-standard extended m3u headers')
+    parser.add_argument('-s', '--shoutcast-metadata', default=False, action='store_true', help='enable Shoutcast metadata protocol support (disabling IDv3 tags)')
     parser.add_argument('-C', '--disable-playcount-increment', default=False, action='store_true', help='disable the automatic increment of playcounts upon song fetch')
 
     config = ConfigParser.SafeConfigParser()
@@ -533,6 +550,7 @@ def getOptions(filename):
     if 'disable-all-access' in configValues: configValues['disable_all_access'] = configValues.pop('disable-all-access')
     if 'disable-version-check' in configValues: configValues['disable_version_check'] = configValues.pop('disable-version-check')
     if 'extended-m3u' in configValues: configValues['extended_m3u'] = configValues.pop('extended-m3u')
+    if 'shoutcast-metadata' in configValues: configValues['shoutcast_metadata'] = configValues.pop('shoutcast-metadata')
     if 'disable-playcount-increment' in configValues: configValues['disable_playcount_increment'] = configValues.pop('disable-playcount-increment')
 
     # some defaults
@@ -594,7 +612,7 @@ def checkLatestVersion():
         logger.debug('Error on malformed version data (\'%s\', \'%s\')', latestVersion, programVersion)
 
 if __name__ == '__main__':
-    downloadBlockSize = 40*1024
+    downloadBlockSize = 5*1024
     defaultNumberTracksStation = 50
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
