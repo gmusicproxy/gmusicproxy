@@ -28,7 +28,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- 1.0.5 (unreleased):
+- 1.0.5 (2016-05-04):
   - send to the client the effective song size: this should allow the player (VLC) to properly show the progress of the playback
   - make HTTP connection for version control more robust: not fatal on error (my HTTP server is down: sorry!)
   - new support to the Shoutcast metadata protocol: at the moment alternative to the IDv3 tag supporto, so disabled by default (thanks to Adam Prato)
@@ -98,7 +98,7 @@ The access to an All Access subscription is strictly necessary to continue its d
 If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. For sake of transparency I will report the amount of donations I receive each year and the percentage of Google Play Music subscription fees you are covering (8€ per month as early subscriber) with them:
 
 - year 2015: 15€ on 96€ ![Progress](http://progressed.io/bar/15?scale=96&suffix=€)
-- year 2016: 96€ on 96€ ![Progress](http://progressed.io/bar/96?scale=96&suffix=€) Thank you!
+- year 2016: 96€ on 96€ ![Progress](http://progressed.io/bar/96?scale=96&suffix=€)
 
 ### Issues
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
