@@ -12,9 +12,9 @@ contributors:
 License: **GPL v3**
 
 ## About
-This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and M3U playlists (e.g., [MPD server][1], [VLC][2], ...). It can work also with a free account without All Access extras.
+This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and to manage M3U playlists (e.g., [MPD server][1], [VLC][2], ...). It can work also with a free account without All Access extras.
 
-Google has released a nice music service and now it is even more interesting with the All Access option. The Google-way to listen your collection and the stations is by means of Android devices or any web browser. If you want to use your TVs or HiFi audio systems, the main tool is the Chromecast key. I can't buy one (at the moment it is not available in my country) and it looks a bit closed. Even more I already got a music-system based on a PC connected to my HiFi audio system: it makes use of [MPD][1] and I would like to keep it.
+Google has released a nice music service with the possibility to stream all the available music using the All Access subscription. The Google-way to listen your collection and the stations is by means of Android devices or any web browser. If you want to use your TVs or HiFi audio systems, the main tool is the Chromecast key (or its audio variant). These devices are closed and limited in someway. I already got a music-system at home based on a small Raspberry-PI connected to my HiFi audio system (using a professional DAC): it makes use of [MPD][1] and I wanted to keep it.
 
 My project is based on the great [Unofficial Google Play Music API][3] of Simon Weber: it already permits to create URLs to stream the tracks as regular MP3 but they expire in 1 minute! Keeping this proxy running, it can generate persistent local URLs that never expire and that can be used in any media-player.
 
@@ -28,6 +28,9 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.6 (unreleased):
+  - bug fixes
+  - documentation improvements
 - 1.0.5 (2016-05-04):
   - send to the client the effective song size: this should allow the player (VLC) to properly show the progress of the playback
   - make HTTP connection for version control more robust: not fatal on error (my HTTP server is down: sorry!)
