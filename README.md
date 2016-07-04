@@ -8,6 +8,7 @@ site: http://gmusicproxy.net
 contributors:
 - [Nick Depinet](mailto:depinetnick@gmail.com)
 - [Adam Prato](mailto:adam.prato@gmail.com)
+- [Pierre Karashchuk](mailto:krchtchk@gmail.com)
 
 License: **GPL v3**
 
@@ -29,6 +30,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 ### Changelog
 - 1.0.6 (unreleased):
+  - support for concurrent requests (thanks to Pierre Karashchuk)
   - bug fixes
   - documentation improvements
 - 1.0.5 (2016-05-04):
