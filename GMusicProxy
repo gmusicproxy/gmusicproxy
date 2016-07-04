@@ -27,6 +27,10 @@ import BaseHTTPServer, socket, urlparse, urllib2, requests
 import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon, distutils.version
 import gmusicapi, gmusicapi.utils, eyed3.id3
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from SocketServer import ThreadingMixIn
+
+class MultiThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
+    pass
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -684,7 +688,7 @@ if __name__ == '__main__':
     if not config['disable_version_check']:
         checkLatestVersion()
 
-    server = BaseHTTPServer.HTTPServer(('0.0.0.0', config['port']), GetHandler)
+    server = MultiThreadedHTTPServer(('0.0.0.0', config['port']), GetHandler)
 
     logger.info('Pre-fetching list of songs in collection')
     server.allSongsCache = api.get_all_songs()
