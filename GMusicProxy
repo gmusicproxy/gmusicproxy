@@ -30,7 +30,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from SocketServer import ThreadingMixIn
 
 class MultiThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
-    pass
+    daemon_threads = True
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
