@@ -31,6 +31,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Changelog
 - 1.0.6 (unreleased):
   - support for concurrent requests (thanks to Pierre Karashchuk)
+  - support for HEAD requests
+  - better shoutcast headers handling
   - bug fixes
   - documentation improvements
 - 1.0.5 (2016-05-04):
@@ -107,9 +109,6 @@ If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a
 
 ### Issues
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
-
-### Known problems / Ideas
-- The proxy can manage only one request at time. The internal structure of the proxy can be extended to manage concurrent requests but first I have to investigate about the Google API and gmusicapi limitations on concurrent accesses.
 
 ## Setup
 ### Requirements
