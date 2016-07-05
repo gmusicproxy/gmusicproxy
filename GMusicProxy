@@ -26,7 +26,7 @@
 #
 
 import BaseHTTPServer, socket, urlparse, urllib2, requests
-import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon, distutils.version
+import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon, distutils.version, threading
 import gmusicapi, gmusicapi.utils, eyed3.id3
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from SocketServer import ThreadingMixIn
@@ -156,7 +156,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def _fetch_songs_list_cache(self):
         logger.debug('Fetching list of songs in collection')
-        self.server.allSongsCache = self._robust_retry(lambda:api.get_all_songs())
+        with self.server.lock:
+            self.server.allSongsCache = self._robust_retry(lambda:api.get_all_songs())
 
     def _icy_name(self, album = None, artist = None, title = None):
         streamtitle = title
@@ -179,18 +180,19 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if not hasattr(self.server, 'allSongsCache'):
                 self._fetch_songs_list_cache()
             refetchOnFailure = True
-            while True:
-                for song in self.server.allSongsCache:
-                    if ( 'nid' in song and song['nid'] == id ) or ( 'id' in song and song['id'] == id ):
-                        info = song.copy()
+            with self.server.lock:
+                while True:
+                    for song in self.server.allSongsCache:
+                        if ( 'nid' in song and song['nid'] == id ) or ( 'id' in song and song['id'] == id ):
+                            info = song.copy()
+                            refetchOnFailure = False
+                            break
+                    if info is None and refetchOnFailure:
+                        logger.debug('Look-up failure in cache for track info, refetching!')
+                        self._fetch_songs_list_cache()
                         refetchOnFailure = False
+                    else:
                         break
-                if info is None and refetchOnFailure:
-                    logger.debug('Look-up failure in cache for track info, refetching!')
-                    self._fetch_songs_list_cache()
-                    refetchOnFailure = False
-                else:
-                    break
         else:
             info = self._robust_retry(lambda:api.get_track_info(store_track_id=id))
         if info is None:
@@ -711,6 +713,7 @@ if __name__ == '__main__':
     server = MultiThreadedHTTPServer(('0.0.0.0', config['port']), GetHandler)
 
     logger.info('Pre-fetching list of songs in collection')
+    server.lock = threading.Lock()
     server.allSongsCache = api.get_all_songs()
 
     logger.info('Listening on port %s...', config['port'])
