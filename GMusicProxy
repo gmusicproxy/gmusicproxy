@@ -160,12 +160,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.server.allSongsCache = self._robust_retry(lambda:api.get_all_songs())
 
     def _icy_name(self, album = None, artist = None, title = None):
-        streamtitle = title
-        if artist:
-            streamtitle = '%s / %s' % (artist, streamtitle)
-        if album:
-            streamtitle = '%s / %s' % (album, streamtitle)
-        return streamtitle.encode('ascii')
+        return '%s /// %s /// %s' % (artist, album, title).encode('ascii')
 
     def _icy_metadata(self, album = None, artist = None, title = None):
         text = 'StreamTitle=\'%ss\';' % (self.icy_name(album, artist, title).decode('ascii'))
