@@ -95,6 +95,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - gmproxy-scripts (helper scripts for working with GMusicProxy): https://github.com/kmac/gmproxy-scripts
 - gpmplay (a bash script to easily search with GMusicproxy): https://github.com/onespaceman/gmpplay
 - g-music (Emacs client for gmusicproxy and mpd): https://github.com/bodicsek/g-music
+- GMusicProxyGui (a C# GUI for the GMusicProxy): https://github.com/Poket-Jony/GMusicProxyGui
 
 ## Support
 ### Donations
