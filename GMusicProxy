@@ -30,6 +30,7 @@ import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigPars
 import gmusicapi, gmusicapi.utils, eyed3.id3
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from SocketServer import ThreadingMixIn
+from gmusicapi.exceptions import CallFailure
 
 class MultiThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     daemon_threads = True
@@ -506,6 +507,18 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def handle_one_request(self):
         try:
             BaseHTTPServer.BaseHTTPRequestHandler.handle_one_request(self)
+        except CallFailure, e:
+            if '401 Client Error: Unauthorized' in e.message and config['device_id'] != '**auto**':
+                logger.warning('Server denied authorization, trying to reconnect...')
+                api.logout()
+                api.login(config['email'], config['password'], config['device_id'])
+                if api.is_authenticated():
+                    self.handle_one_request()
+                else:
+                    logger.error('Sorry, could not reconnect, those credentials weren\'t accepted.')
+                    sys.exit(1)
+            else:
+                raise
         except socket.error, e:
             if e[0] == errno.ECONNRESET:
                 logger.warning('Detected connection reset.')
