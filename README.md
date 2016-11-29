@@ -37,6 +37,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
   - bug fixes
   - documentation improvements
   - a more robust re-authentication system (thanks to Alex Busenius)
+  - new keyring support for desktop computers (thanks to Alex Busenius)
 - 1.0.5 (2016-05-04):
   - send to the client the effective song size: this should allow the player (VLC) to properly show the progress of the playback
   - make HTTP connection for version control more robust: not fatal on error (my HTTP server is down: sorry!)
