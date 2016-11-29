@@ -31,6 +31,10 @@ import gmusicapi, gmusicapi.utils, eyed3.id3
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from SocketServer import ThreadingMixIn
 from gmusicapi.exceptions import CallFailure
+try:
+    import keyring.core as keyring
+except ImportError:
+    pass
 
 class MultiThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     daemon_threads = True
@@ -564,6 +568,10 @@ def getOptions(filename):
     parser.add_argument('-x', '--extended-m3u', default=False, action='store_true', help='enable non-standard extended m3u headers')
     parser.add_argument('-s', '--shoutcast-metadata', default=False, action='store_true', help='enable Shoutcast metadata protocol support (disabling IDv3 tags)')
     parser.add_argument('-C', '--disable-playcount-increment', default=False, action='store_true', help='disable the automatic increment of playcounts upon song fetch')
+    parser.add_argument('--keyring-backend', help='name of the keyring backend to use instead of the default one')
+    parser.add_argument('--list-keyring-backends', default=False, action='store_true', help='list the available keyring backends')
+    parser.add_argument('--keyring-service', help='keyring service to use, takes precedence over --password if set')
+    parser.add_argument('--keyring-entry', help='keyring entry to use, required if --keyring-service is used')
 
     config = ConfigParser.SafeConfigParser()
     args = parser.parse_args()
@@ -579,13 +587,9 @@ def getOptions(filename):
     configValues = dict(config.items('dummy'))
 
     # adjust some names in order to make work configparser with argparse
-    if 'device-id' in configValues: configValues['device_id'] = configValues.pop('device-id')
-    if 'list-devices' in configValues: configValues['list_devices'] = configValues.pop('list-devices')
-    if 'disable-all-access' in configValues: configValues['disable_all_access'] = configValues.pop('disable-all-access')
-    if 'disable-version-check' in configValues: configValues['disable_version_check'] = configValues.pop('disable-version-check')
-    if 'extended-m3u' in configValues: configValues['extended_m3u'] = configValues.pop('extended-m3u')
-    if 'shoutcast-metadata' in configValues: configValues['shoutcast_metadata'] = configValues.pop('shoutcast-metadata')
-    if 'disable-playcount-increment' in configValues: configValues['disable_playcount_increment'] = configValues.pop('disable-playcount-increment')
+    for key in configValues.keys():
+        if '-' in key:
+            configValues[key.replace('-', '_')] = configValues.pop(key)
 
     # some defaults
     if 'host' not in configValues: configValues['host']='**auto**'
@@ -645,6 +649,38 @@ def checkLatestVersion():
     except ValueError:
         logger.debug('Error on malformed version data (\'%s\', \'%s\')', latestVersion, programVersion)
 
+def checkKeyringModule():
+    if not 'keyring' in globals():
+        logger.error('Python \'keyring\' module is not available!\n'
+                'Please consult https://pypi.python.org/pypi/keyring#installation-instructions to use keyring feature')
+        sys.exit(1)
+
+def getKeyringPassword():
+    checkKeyringModule()
+    try:
+        if config['keyring_backend']:
+            keyring.set_keyring(keyring.load_keyring(config['keyring_backend']))
+
+        if config['keyring_service'] is None or config['keyring_entry'] is None:
+            logger.error('Please, specify both keyring service and keyring entry in the config file or on the command-line to use keyring feature.')
+            sys.exit(1)
+
+        password = keyring.get_password(config['keyring_service'], config['keyring_entry'])
+        if (password is None):
+            logger.error('No password is stored in entry \'%s\' of service \'%s\'', config['keyring_entry'], config['keyring_service'])
+
+        return password
+    except Exception, e:
+        logger.error('Failed to access keyring: %s', e.message)
+        sys.exit(1)
+
+def listKeyringBackends():
+    checkKeyringModule()
+    logger.info('Available keyring backends:')
+    for backend in keyring.backend.get_all_keyring():
+        logger.info('    %s.%s', type(backend).__module__, type(backend).__name__)
+    sys.exit()
+
 if __name__ == '__main__':
     downloadBlockSize = 5*1024
     defaultNumberTracksStation = 50
@@ -698,6 +734,9 @@ if __name__ == '__main__':
     safeConfig['password'] = '***OMITTED***'   # for debug dump
     logger.debug('configuration used:\n%s\n', pprint.pformat(safeConfig))
 
+    if config['keyring_service'] is not None or config['keyring_entry'] is not None:
+        config['password'] = getKeyringPassword()
+
     if config['email'] is None or config['password'] is None or len(config['email']) == 0 or len(config['password']) == 0:
         logger.error('Please, specify the credentials of your Google account in the config file or on the command-line.')
         sys.exit(1)
@@ -706,6 +745,9 @@ if __name__ == '__main__':
 
     if config['list_devices']:
         listDevices()
+
+    if config['list_keyring_backends']:
+        listKeyringBackends()
 
     if config['host'] == '**auto**':
         config['host'] = autodetectLocalIP()
