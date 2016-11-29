@@ -184,6 +184,10 @@ Here a list of the supported options on the command-line:
 - `--extended-m3u`: enable non-standard extended m3u headers
 - `--shoutcast-metadata`: enable Shoutcast metadata protocol support (disabling IDv3 tags)
 - `--disable-playcount-increment`: disable the automatic increment of playcounts upon song fetch
+- `--keyring-backend`: name of the keyring backend to use instead of the default one
+- `--list-keyring-backends`: list the available keyring backends
+- `--keyring-service`: keyring service to use, takes precedence over `--password` if set
+- `--keyring-entry`: keyring entry to use, required if `--keyring-service` is used
 
 ### Config file
 All the command-line options can be specified in a configuration file. An example of configuration with the strictly required options could look like this:
@@ -195,6 +199,21 @@ All the command-line options can be specified in a configuration file. An exampl
   ```
 
 When the proxy is launched, it searches for a file named `gmusicproxy.cfg` in the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using the option `--config`.
+
+### Using keyring to store the password
+Password can be retrieved from one of the available keyrings (e.g. KWallet, Freedesktop Secret Service, Windows Credential Vault, Mac OS X Keychain). Use command-line option `--list-keyring-backends` to find out, which keyring backends are supported on your platform.
+If the default keyring backend is not what you want, you can override it using option `--keyring-backend`.
+
+To read the password from the keyring, specify the options `--keyring-service` and `--keyring-entry`. Use the corresponding keyring manager to store the password or find entry name for one of your existing passwords.
+
+E.g. for KWallet, you can list available service names and entries as follows:
+
+  ```bash
+  # list service names
+  kwallet-query -l kdewallet -f ""
+  # list entries of service "Passwords"
+  kwallet-query -l kdewallet -f "Passwords"
+  ```
 
 ### URL-based interface
 The only way to use the service is to query the proxy by means of properly formatted HTTP requests over the configured TCP port. Such URLs can be used directly in music programs or in scripts or in any browser. A URL looks like this: `http://host:port/command?param_1=value&param_2=value`. I don't apply any validation to the submitted values: please, be nice with the proxy and don't exploit it! :)
