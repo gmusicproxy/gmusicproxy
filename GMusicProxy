@@ -284,7 +284,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def _get_station(self, id, numTracks):
         station = self._robust_retry(lambda:api.get_station_tracks(station_id=id, num_tracks=numTracks))
-        logger.info('Getting %s tracks from station with id \'%s\'', (numTracks, id))
+        logger.info('Getting %s tracks from station with id \'%s\'', numTracks, id)
         logger.debug(pprint.pformat(station))
         self.wfile.write('#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
@@ -340,7 +340,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                                 logger.debug(line)
                             else:
-                                logger.warning("no information available in collection of track with id '%s'!" % track['trackId'])
+                                logger.warning("no information available in collection of track with id '%s'!", track['trackId'])
                     found=True
             if not found: logger.warning("Playlist not found!")
 
@@ -418,7 +418,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.info('Searching for %s with query: %s %s', type, query_artist, query_title)
         match = None
         if type == 'artist':
-            results = self._robust_retry(lambda:api.search_all_access(query_artist))
+            results = self._robust_retry(lambda:api.search(query_artist))
             logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'artist_hits' in results and len(results['artist_hits']) > 0:
                 logger.debug('I\'m feeling lucky: lets select the first artist in list!')
@@ -437,7 +437,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 logger.warning('No matching found.')
         elif type == 'song':
-            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title)))
+            results = self._robust_retry(lambda:api.search('%s %s' % (query_artist, query_title)))
             logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'song_hits' in results and len(results['song_hits']) > 0:
                 logger.debug('I\'m feeling lucky: lets select the first song!')
@@ -456,7 +456,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 logger.warning('No matching found.')
         elif type == 'matches':
-            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title), max_results))
+            results = self._robust_retry(lambda:api.search('%s %s' % (query_artist, query_title), max_results))
             logger.debug(pprint.pformat(results))
             match = results['song_hits']
             if match:
@@ -464,7 +464,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 logger.warning('No matching found.')
         elif type == 'album':
-            results = self._robust_retry(lambda:api.search_all_access('%s %s' % (query_artist, query_title)))
+            results = self._robust_retry(lambda:api.search('%s %s' % (query_artist, query_title)))
             logger.debug(pprint.pformat(results))
             if exact != 'yes' and 'album_hits' in results and len(results['album_hits']) > 0:
                 logger.debug('I\'m feeling lucky: lets select the first album in list!')
