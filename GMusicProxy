@@ -165,10 +165,10 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.server.allSongsCache = self._robust_retry(lambda:api.get_all_songs())
 
     def _icy_name(self, album = None, artist = None, title = None):
-        return '%s /// %s /// %s' % (artist, album, title).encode('ascii')
+        return ('%s /// %s /// %s' % (artist, album, title)).encode('ascii')
 
     def _icy_metadata(self, album = None, artist = None, title = None):
-        text = 'StreamTitle=\'%ss\';' % (self.icy_name(album, artist, title).decode('ascii'))
+        text = 'StreamTitle=\'%ss\';' % (self._icy_name(album, artist, title).decode('ascii'))
         metadata = (chr(len(text)) + text).ljust(len(text) * 16 + 1, chr(0))
         return metadata.encode('ascii')
 
