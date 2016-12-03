@@ -89,7 +89,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         elif parsedPath.path == '/get_by_search' and 'type' in params and ('title' in params or 'artist' in params):
             if self._check_aa(): return
             if ('type' in params and params['type'][0].lower().strip() != 'song'):
-                self._send_headers(200, 'audio/mpegurl', 'playlist.m3u')
+                self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
             result=self._search(type=params['type'][0].lower().strip() if 'type' in params else 'artist', query_title=params['title'][0].decode('latin-1') if 'title' in params else '', query_artist=params['artist'][0].decode('latin-1') if 'artist' in params else '', exact=params['exact'][0].lower().strip() if 'exact' in params else 'no', max_results=params['num_tracks'][0] if 'num_tracks' in params else None)
             if result and len(result)>0:
                 if params['type'][0].lower().strip() == 'artist':
