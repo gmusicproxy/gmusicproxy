@@ -30,6 +30,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.7b1 (unreleased):
+  - bug fixes (shoutcast metadata)
 - 1.0.6 (2016-12-03):
   - support for concurrent requests (thanks to Pierre Karashchuk)
   - support for HEAD requests
