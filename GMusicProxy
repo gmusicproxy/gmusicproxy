@@ -228,13 +228,13 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 lambda: api.get_all_songs())
 
     def _icy_name(self, album=None, artist=None, title=None):
-        return ('%s /// %s /// %s' % (artist, album, title)).encode('ascii')
+        return ('%s /// %s /// %s' % (artist, album, title)).encode('utf-8')
 
     def _icy_metadata(self, album=None, artist=None, title=None):
         text = 'StreamTitle=\'%ss\';' % (
-            self._icy_name(album, artist, title).decode('ascii'))
+            self._icy_name(album, artist, title).decode('utf-8'))
         metadata = (chr(len(text)) + text).ljust(len(text) * 16 + 1, chr(0))
-        return metadata.encode('ascii')
+        return metadata.encode('utf-8')
 
     def _get_song(self, id, only_headers=False):
         if config['disable_all_access'] or id[0] != 'T':
