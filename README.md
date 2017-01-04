@@ -31,6 +31,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 ### Changelog
 - 1.0.7b1 (unreleased):
+  - possibility to bind to a specific network interface (thanks to fgtham)
   - bug fixes (shoutcast metadata)
 - 1.0.6 (2016-12-03):
   - support for concurrent requests (thanks to Pierre Karashchuk)
@@ -177,6 +178,7 @@ Here a list of the supported options on the command-line:
 - `--password`: password of the Google account [required]
 - `--device-id`: the ID of a registered Android/iOS device [default: fake-id based on mac address of network card]
 - `--host`: host in the generated URLs [default: autodetected local ip address]
+- `--bind-address`: ip address to bind to [default: 0.0.0.0=all]
 - `--port`: default TCP port to use [default: 9999]
 - `--config`: specific configuration file to use
 - `--disable-all-access`: disable All Access functionalities

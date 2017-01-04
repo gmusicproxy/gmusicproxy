@@ -704,6 +704,8 @@ def getOptions(filename):
         '-d', '--device-id', help='the ID of a registered Android/iOS device [default: fake-id based on mac address of network card]')
     parser.add_argument(
         '-H', '--host', help='host in the generated URLs [default: autodetected local ip address]')
+    parser.add_argument(
+        '-b', '--bind-address', help='ip address to bind to [default: 0.0.0.0=all]')
     parser.add_argument('-P', '--port', type=int,
                         help='default TCP port to use [default: 9999]')
     parser.add_argument('-a', '--disable-all-access', default=False,
@@ -750,7 +752,12 @@ def getOptions(filename):
         if '-' in key:
             configValues[key.replace('-', '_')] = configValues.pop(key)
 
+    if 'bind_address' in configValues and 'host' not in configValues:
+        configValues['host'] = configValues['bind_address']
+
     # some defaults
+    if 'bind_address' not in configValues:
+        configValues['bind_address'] = '0.0.0.0'
     if 'host' not in configValues:
         configValues['host'] = '**auto**'
     if 'port' not in configValues:
@@ -866,7 +873,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.7b1'
+    programVersion = '1.0.7b2'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
@@ -944,13 +951,15 @@ if __name__ == '__main__':
     if not config['disable_version_check']:
         checkLatestVersion()
 
-    server = MultiThreadedHTTPServer(('0.0.0.0', config['port']), GetHandler)
+    server = MultiThreadedHTTPServer(
+        (config['bind_address'], config['port']), GetHandler)
 
     logger.info('Pre-fetching list of songs in collection')
     server.lock = threading.Lock()
     server.allSongsCache = api.get_all_songs()
 
-    logger.info('Listening on port %s...', config['port'])
+    logger.info('Listening on %s:%s...', config[
+                'bind_address'], config['port'])
 
     if config['daemon']:
         contextDaemon.files_preserve.append(server.fileno())
