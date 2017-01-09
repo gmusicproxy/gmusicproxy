@@ -30,9 +30,10 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- 1.0.7b1 (unreleased):
+- 1.0.7 (2017-01-09):
   - possibility to bind to a specific network interface (thanks to fgtham)
   - bug fixes (shoutcast metadata)
+  - early release to fix the lack of requirement for gmusicapi 10.1.0 in the setup
 - 1.0.6 (2016-12-03):
   - support for concurrent requests (thanks to Pierre Karashchuk)
   - support for HEAD requests
