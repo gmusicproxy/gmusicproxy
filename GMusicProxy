@@ -52,8 +52,11 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from SocketServer import ThreadingMixIn
 from gmusicapi.exceptions import CallFailure
 try:
-    import keyring.core as keyring
     import daemon
+except Exception:
+    pass
+try:
+    import keyring.core as keyring
 except ImportError:
     pass
 
