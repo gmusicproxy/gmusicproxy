@@ -4,6 +4,7 @@
 import re
 from setuptools import setup, find_packages
 import sys
+import os
 
 GMUSICPROXYFILE = 'GMusicProxy'
 version_line = open(GMUSICPROXYFILE).read()
@@ -25,6 +26,6 @@ setup(
     description='Google Play Music Proxy - "Let\'s stream Google Play Music using any music program"',
     long_description=(open('README.md').read()),
     install_requires=['gmusicapi==10.1.0', 'netifaces>=0.10.4',
-                      'pyxdg>=0.25', 'eyed3>=0.7.8', 'python-daemon>=2.0.5'],
+                      'pyxdg>=0.25', 'eyed3>=0.7.8', 'python-daemon>=2.0.5' if not os.name == 'nt' else ''],
     extras_require={'keyring': 'keyring>=10.0'}
 )
