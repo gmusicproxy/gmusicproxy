@@ -48,6 +48,7 @@ import threading
 import gmusicapi
 import gmusicapi.utils
 import eyed3.id3
+import random
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from SocketServer import ThreadingMixIn
 from gmusicapi.exceptions import CallFailure
@@ -103,7 +104,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         elif parsedPath.path == '/get_playlist' and 'id' in params:
             self._send_headers(200, 'audio/mpegurl',
                                'inline; filename=playlist.m3u')
-            self._get_playlist(id=params['id'][0])
+            self._get_playlist(id=params['id'][0], shuffle=True if ('shuffle' in params and params['shuffle'][0] == 'yes') else False)
         elif parsedPath.path == '/get_album' and 'id' in params:
             self._send_headers(200, 'audio/mpegurl',
                                'inline; filename=playlist.m3u')
@@ -412,7 +413,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
-    def _get_playlist(self, id):
+    def _get_playlist(self, id, shuffle=False):
         logger.info('Getting tracks from playlist with id \'%s\'', id)
         # we have to download the content of all the playlists (actual API
         # limitation)
@@ -428,6 +429,9 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         found = False
         for playlist in playlistsWithContents:
             if 'id' in playlist and playlist['id'] == id:
+                if shuffle:
+                    logger.info('Shuffling the playlist')
+                    random.shuffle(playlist['tracks'])
                 for track in playlist['tracks']:
                     if 'trackId' in track:
                         foundTrack = None

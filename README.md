@@ -279,6 +279,7 @@ Here a list of the supported requests (with some restricted by the availability 
 - `/get_playlist`: reports the content of a registered playlist in the M3U format.
   Allowed parameters:
      - `id`: the unique identifier of the playlist [required]
+     - `shuffle`: if the list has to be shuffled [default: no]
 - `/get_album`: reports the content of an album as an M3U playlist.
   Allowed parameters:
      - `id`: the unique identifier of the album [required]
