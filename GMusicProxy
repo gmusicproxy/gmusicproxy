@@ -43,7 +43,6 @@ import ConfigParser
 import xdg.BaseDirectory
 import StringIO
 import logging
-import daemon
 import distutils.version
 import threading
 import gmusicapi
@@ -54,6 +53,7 @@ from SocketServer import ThreadingMixIn
 from gmusicapi.exceptions import CallFailure
 try:
     import keyring.core as keyring
+    import daemon
 except ImportError:
     pass
 
@@ -873,7 +873,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.7'
+    programVersion = '1.0.8b1'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
@@ -909,6 +909,12 @@ if __name__ == '__main__':
 
     # preliminar setup for the daemonaization
     if config['daemon']:
+        if os.name == 'nt':
+            logger.error('Daemon-mode is not supported under Windows!')
+            sys.exit(1)
+        if not 'daemon' in globals():
+            logger.error('Python \'daemon\' module is not installed!')
+            sys.exit(1)
         contextDaemon = daemon.DaemonContext(files_preserve=[])
         # python-daemon>=2.1 has initgroups=True by default but it requires root privs
         # older versions don't support initgroups as constructor parameter so
