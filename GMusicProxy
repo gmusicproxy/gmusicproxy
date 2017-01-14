@@ -324,8 +324,6 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile.write(tagsBin)
 
             # prefill cache
-            cachePrefillSize = 60 * 320/8 * 1024 # 60 seconds at 320 kbit/s
-            maxCacheSize = 180 * 320/8 * 1024 # 180 seconds
             writtenBytes = 0
             mp3 = opener.open(url)
             block = mp3.read(downloadBlockSize)
@@ -352,7 +350,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             while len(block) > 0:
                 cache.extend(block)
                 block = mp3.read(downloadBlockSize)
- 
+
             # serve from cache
             position = 0
             while position < cacheSize:
@@ -927,12 +925,14 @@ def listKeyringBackends():
 
 if __name__ == '__main__':
     downloadBlockSize = 16 * 1024
+    cachePrefillSize = 60 * 320/8 * 1024 # 60 seconds at 320 kbit/s
+    maxCacheSize = 180 * 320/8 * 1024 # 180 seconds
     defaultNumberTracksStation = 50
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.8b2'
+    programVersion = '1.0.8b3'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
