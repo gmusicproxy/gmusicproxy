@@ -128,7 +128,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         elif parsedPath.path == '/get_collection':
             self._send_headers(200, 'audio/mpegurl',
                                'inline; filename=playlist.m3u')
-            self._get_collection()
+            self._get_collection( ratingthreshold=params['rating'][0] if 'rating' in params else 0, shuffle=True if ('shuffle' in params and params['shuffle'][0] == 'yes') else False, )
         elif parsedPath.path == '/search_id' and 'type' in params and ('title' in params or 'artist' in params):
             self._send_headers(200)
             if self._check_aa():
@@ -532,11 +532,24 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
-    def _get_collection(self):
+    def _get_collection(self, ratingthreshold=0, shuffle=False):
         songs = self._robust_retry(lambda: api.get_all_songs())
         if len(songs) == 0:
             logger.warning("No songs in your collection!?!")
             return
+
+        if ratingthreshold > 0:
+            logger.info('Filtering out songs with rating lower than %s', ratingthreshold)
+            for song in songs:
+                songrating = song.get('rating')
+                if songrating is not None:
+                    if int(songrating) < ratingthreshold:
+                        songs.remove(song)
+
+        if shuffle:
+            logger.info('Shuffling the collection')
+            random.shuffle(songs)
+			
         logger.info('Getting your collection: %s tracks', len(songs))
         logger.debug(pprint.pformat(songs))
         self.wfile.write('#EXTM3U\n')
