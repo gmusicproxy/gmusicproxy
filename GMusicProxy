@@ -9,6 +9,7 @@
 #  - Adam Prato < adam.prato (at) gmail.com >
 #  - Pierre Karashchuk < krchtchk (at) gmail.com >
 #  - Alex Busenius
+#  - Mark Gillespie < mark.gillespie (at) gmail.com >
 #
 # license: GPL v3
 #
@@ -549,7 +550,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if shuffle:
             logger.info('Shuffling the collection')
             random.shuffle(songs)
-			
+
         logger.info('Getting your collection: %s tracks', len(songs))
         logger.debug(pprint.pformat(songs))
         self.wfile.write('#EXTM3U\n')
@@ -906,7 +907,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.8b1'
+    programVersion = '1.0.8b2'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []

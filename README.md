@@ -10,6 +10,7 @@ contributors:
 - [Adam Prato](mailto:adam.prato@gmail.com)
 - [Pierre Karashchuk](mailto:krchtchk@gmail.com)
 - [Alex Busenius](mailto:)
+- [Mark Gillespie](mailto:mark.gillespie@gmail.com)
 
 License: **GPL v3**
 
@@ -30,11 +31,11 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- 1.0.8b1 (unreleased):
+- 1.0.8b2 (unreleased):
   - daemon-mode is not supported under Windows (but it could be under cygwin...): this allows to run gmusicproxy without the `daemon` module
   - support for on-the-fly shuffling of playlists and collections
   - support for public/shared playlists
-  - support filtering collection returned from get_collection by minimum rating
+  - support filtering collection returned from get_collection by minimum rating (thanks to Mark Gillespie)
 - 1.0.7 (2017-01-09):
   - possibility to bind to a specific network interface (thanks to fgtham)
   - bug fixes (shoutcast metadata)
@@ -234,10 +235,10 @@ Consider that any song, album, artist, playlist or station got a unique ID in Go
 
 Here a list of the supported requests (with some restricted by the availability of a All Access subscription):
 
-- `/get_collection`: reports an M3U playlist with all the songs in your personal collection.
+- `/get_collection`: reports an M3U playlist with all the songs in your personal collection; the resulting list can be shuffled and/or filtered using the rating; note that not all the rated (liked) songs belong to your collection.
   Allowed parameters:
      - `shuffle`: if the collection has to be shuffled [default: no]
-	 - `rating`: an integer value (typically between 1-5) to filter out low rated or unrated songs form your collection (NOTE:  It's possible to rate any song on Google Music, including songs that aren't part of your collection, this will only apply the filter to rated songs from your collection).
+	 - `rating`: an integer value (typically between 1-5) to filter out low rated or unrated songs form your collection
 - `/search_id`: reports the unique ID as result of a search for an artist, a song or an album.
   Allowed parameters:
      - `type`: search for `artist`, `album` or `song` [required]
@@ -282,7 +283,7 @@ Here a list of the supported requests (with some restricted by the availability 
 - `/get_ifl_station`: reports an M3U playlist of tracks associated to the automatic "I'm feeling lucky" station  [requires A.A.].
   Allowed parameters:
      - `num_tracks`: the number of tracks to extract [default: 20]
-- `/get_playlist`: reports the content of a registered playlist in the M3U format.
+- `/get_playlist`: reports the content of a registered playlist in the M3U format; the list can be also shuffled.
   Allowed parameters:
      - `id`: the unique identifier of the playlist [required]
      - `shuffle`: if the list has to be shuffled [default: no]
