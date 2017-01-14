@@ -32,6 +32,8 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Changelog
 - 1.0.8b1 (unreleased):
   - daemon-mode is not supported under Windows (but it could be under cygwin...): this allows to run gmusicproxy without the `daemon` module
+  - support for on-the-fly shuffling of playlists
+  - support for public/shared playlists
 - 1.0.7 (2017-01-09):
   - possibility to bind to a specific network interface (thanks to fgtham)
   - bug fixes (shoutcast metadata)

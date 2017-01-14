@@ -367,12 +367,15 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                      == 'text' else 'generated playlist:\n#EXTM3U')
         for playlist in playlists:
             if 'id' in playlist:
+                useToken = False
+                if 'type' in playlist and playlist['type'] == 'SHARED':
+                    useToken = True
                 if format.lower().strip() == 'text':
                     line = '%shttp://%s:%s/get_playlist?id=%s' % ('%s%s' % (playlist['name'], separator) if (
-                        'name' in playlist and onlyUrl.lower().strip() != 'yes') else '', config['host'], config['port'], playlist['id'])
+                        'name' in playlist and onlyUrl.lower().strip() != 'yes') else '', config['host'], config['port'], playlist['id'] if not useToken else playlist['shareToken'])
                 else:
                     line = '#EXTINF:-1,%s\nhttp://%s:%s/get_playlist?id=%s' % (
-                        playlist['name'] if 'name' in playlist else '', config['host'], config['port'], playlist['id'])
+                        playlist['name'] if 'name' in playlist else '', config['host'], config['port'], playlist['id'] if not useToken else playlist['shareToken'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
@@ -415,44 +418,54 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def _get_playlist(self, id, shuffle=False):
         logger.info('Getting tracks from playlist with id \'%s\'', id)
-        # we have to download the content of all the playlists (actual API
-        # limitation)
-        playlistsWithContents = self._robust_retry(
-            lambda: api.get_all_user_playlist_contents())
-        logger.debug(pprint.pformat(playlistsWithContents))
 
         # necessary to get track information on uploaded songs
         wholeCollection = self._robust_retry(lambda: api.get_all_songs())
 
+        targetPlaylist = None
         self.wfile.write('#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
-        found = False
-        for playlist in playlistsWithContents:
-            if 'id' in playlist and playlist['id'] == id:
-                if shuffle:
-                    logger.info('Shuffling the playlist')
-                    random.shuffle(playlist['tracks'])
-                for track in playlist['tracks']:
-                    if 'trackId' in track:
-                        foundTrack = None
-                        if 'track' in track:
-                            foundTrack = track['track']
-                        else:
-                            for song in wholeCollection:
-                                if song['id'] == track['trackId']:
-                                    foundTrack = song
-                                    break
-                        if foundTrack:
-                            line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(foundTrack['durationMillis']) / 1000) if 'durationMillis' in foundTrack else -1, '%s - ' % foundTrack['artist'] if 'artist' in foundTrack else '', foundTrack[
-                                                                                       'title'] if 'title' in foundTrack else '', ' - %s' % foundTrack['album'] if config['extended_m3u'] and 'album' in foundTrack else '', config['host'], config['port'], track['trackId'])
-                            self.wfile.write(('%s\n' % line).encode('utf-8'))
-                            logger.debug(line)
-                        else:
-                            logger.warning(
-                                "no information available in collection of track with id '%s'!", track['trackId'])
-                found = True
-        if not found:
+
+        if id[0] == 'A' and id[1] == 'M':
+            targetPlaylist = self._robust_retry(
+                lambda: api.get_shared_playlist_contents(id))
+            logger.debug(pprint.pformat(targetPlaylist))
+        else:
+            # we have to download the content of all the playlists (actual API
+            # limitation)
+            playlistsWithContents = self._robust_retry(
+                lambda: api.get_all_user_playlist_contents())
+            logger.debug(pprint.pformat(playlistsWithContents))
+
+            for playlist in playlistsWithContents:
+                if 'id' in playlist and playlist['id'] == id:
+                    targetPlaylist = playlist['tracks']
+
+        if targetPlaylist is not None:
+            if shuffle:
+                logger.info('Shuffling the playlist')
+                random.shuffle(targetPlaylist)
+            for track in targetPlaylist:
+                if 'trackId' in track:
+                    foundTrack = None
+                    if 'track' in track:
+                        foundTrack = track['track']
+                    else:
+                        for song in wholeCollection:
+                            if song['id'] == track['trackId']:
+                                foundTrack = song
+                                break
+                    if foundTrack:
+                        line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(foundTrack['durationMillis']) / 1000) if 'durationMillis' in foundTrack else -1, '%s - ' % foundTrack['artist'] if 'artist' in foundTrack else '', foundTrack[
+                                                                                   'title'] if 'title' in foundTrack else '', ' - %s' % foundTrack['album'] if config['extended_m3u'] and 'album' in foundTrack else '', config['host'], config['port'], track['trackId'])
+                        self.wfile.write(('%s\n' % line).encode('utf-8'))
+                        logger.debug(line)
+                    else:
+                        logger.warning(
+                            "no information available in collection of track with id '%s'!", track['trackId'])
+        else:
             logger.warning("Playlist not found!")
+
 
     def _get_album(self, id):
         album = self._robust_retry(lambda: api.get_album_info(
