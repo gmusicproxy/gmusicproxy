@@ -37,6 +37,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
   - support for public/shared playlists
   - support filtering collection returned from get_collection by minimum rating (thanks to Mark Gillespie)
   - cache the end of song in RAM in order to prevent some connection timeout errors (thanks to Alex Busenius)
+  - possible fix for the long standing bug on the truncated download of some songs
 - 1.0.7 (2017-01-09):
   - possibility to bind to a specific network interface (thanks to fgtham)
   - bug fixes (shoutcast metadata)
