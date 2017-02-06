@@ -295,6 +295,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if 'albumArtRef' in info:
                 albumArt = opener.open(info['albumArtRef'][0]['url']).read()
                 tags.images.set(3, albumArt, "image/jpeg")
+            if 'year' in info:
+                tags.recording_date = int(info['year'])
             if 'estimatedSize' in info:
                 songSize = int(info['estimatedSize'])
             else:
