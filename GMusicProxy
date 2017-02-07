@@ -249,23 +249,26 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if not hasattr(self.server, 'allSongsCache'):
                 self._fetch_songs_list_cache()
             refetchOnFailure = True
-            with self.server.lock:
-                while True:
+            while True:
+                with self.server.lock:
                     for song in self.server.allSongsCache:
                         if ('nid' in song and song['nid'] == id) or ('id' in song and song['id'] == id):
                             info = song.copy()
                             refetchOnFailure = False
                             break
-                    if info is None and refetchOnFailure:
-                        logger.debug(
-                            'Look-up failure in cache for track info, refetching!')
-                        self._fetch_songs_list_cache()
-                        refetchOnFailure = False
-                    else:
-                        break
+                if info is None and refetchOnFailure:
+                    logger.debug(
+                        'Look-up failure in cache for track info, refetching!')
+                    self._fetch_songs_list_cache()
+                    refetchOnFailure = False
+                else:
+                    break
         else:
-            info = self._robust_retry(
-                lambda: api.get_track_info(store_track_id=id))
+            if id[0] == 'T':
+                info = self._robust_retry(
+                    lambda: api.get_track_info(store_track_id=id))
+            else:
+                logger.error('Unsupported id \'%s\': report info to reproduce this to the author', id)
         if info is None:
             logger.info('Streaming song with id \'%s\'', id)
             tagsBin = None
