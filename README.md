@@ -31,7 +31,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
-- 1.0.8b3 (unreleased):
+- 1.0.8b5 (unreleased):
   - daemon-mode is not supported under Windows (but it could be under cygwin...): this allows to run gmusicproxy without the `daemon` module
   - support for on-the-fly shuffling of playlists and collections
   - support for public/shared playlists
@@ -39,6 +39,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
   - cache the end of song in RAM in order to prevent some connection timeout errors (thanks to Alex Busenius)
   - possible fix for the long standing bug on the truncated download of some songs
   - support for recording year in IDv3 tag (thanks to redlulz)
+  - fix for deadlock in cache management and in ids handling
 - 1.0.7 (2017-01-09):
   - possibility to bind to a specific network interface (thanks to fgtham)
   - bug fixes (shoutcast metadata)

@@ -252,7 +252,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             while True:
                 with self.server.lock:
                     for song in self.server.allSongsCache:
-                        if ('storeId' in song and song['storeId'] == id) or ('nid' in song and song['nid'] == id) or ('id' in song and song['id'] == id):
+                        if ('nid' in song and song['nid'] == id) or ('id' in song and song['id'] == id):
                             info = song.copy()
                             refetchOnFailure = False
                             break
@@ -260,6 +260,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     logger.debug(
                         'Look-up failure in cache for track info, refetching!')
                     self._fetch_songs_list_cache()
+                    logger.debug('REFETCH COMPLETED')
                     refetchOnFailure = False
                 else:
                     break
@@ -268,7 +269,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 info = self._robust_retry(
                     lambda: api.get_track_info(store_track_id=id))
             else:
-                logger.error('Unsupported id \'%s\': report info to reproduce this to the author', id)
+                logger.info('Unsupported id \'%s\': report info to reproduce this to the author', id)
+        logger.debug('ATTEMPT TO FETCH INFO COMPLETED')
         if info is None:
             logger.info('Streaming song with id \'%s\'', id)
             tagsBin = None
@@ -639,11 +641,11 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                             logger.debug('Found exact matching song!')
                             match = song
                             break
-            if match and 'track' in match and 'storeId' in match['track']:
+            if match and 'track' in match and 'nid' in match['track']:
                 logger.info('Selected song: %s - %s (%s)', match['track'][
-                            'artist'], match['track']['title'], match['track']['storeId'])
+                            'artist'], match['track']['title'], match['track']['nid'])
                 logger.debug(pprint.pformat(match))
-                return match['track']['storeId']
+                return match['track']['nid']
             else:
                 logger.warning('No matching found.')
         elif type == 'matches':
@@ -691,11 +693,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     break
             allSongs = None
         else:
-            if id[0] == 'T':
-                info = self._robust_retry(
-                    lambda: api.get_track_info(store_track_id=id))
-            else:
-                logger.error('Unsupported id \'%s\': report info to reproduce this to the author', id)
+            info = self._robust_retry(
+                lambda: api.get_track_info(store_track_id=id))
         if info is None:
             logger.warning('Song with id \'%s\' not found.', id)
         else:
@@ -945,7 +944,7 @@ if __name__ == '__main__':
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
     programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.8b5'
+    programVersion = '1.0.8b4'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
