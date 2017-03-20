@@ -33,6 +33,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Changelog
 - 1.0.9-beta (unreleased):
   - fix issue with missing recording year
+  - less strict version requirement for gmusicapi (easy life for packaging managers)
 - 1.0.8 (2017-02-07):
   - daemon-mode is not supported under Windows (but it could be under cygwin...): this allows to run gmusicproxy without the `daemon` module
   - support for on-the-fly shuffling of playlists and collections
