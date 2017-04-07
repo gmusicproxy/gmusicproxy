@@ -560,9 +560,9 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for song in matches:
             track = song['track']
-            if 'nid' in track:
+            if 'storeId' in track:
                 line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis']) / 1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track[
-                                                                           'title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
+                                                                           'title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['storeId'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)
 
