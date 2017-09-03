@@ -128,7 +128,7 @@ If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a
 
 - year 2015: 15€ on 96€ ![Progress](http://progressed.io/bar/15?scale=96&suffix=€)
 - year 2016: 96€ on 96€ ![Progress](http://progressed.io/bar/96?scale=96&suffix=€)
-- year 2017: 61€ on 96€ ![Progress](http://progressed.io/bar/61?scale=96&suffix=€)
+- year 2017: 71€ on 96€ ![Progress](http://progressed.io/bar/71?scale=96&suffix=€)
 
 ### Issues
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
