@@ -27,10 +27,24 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import BaseHTTPServer
+try: # python2
+    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+    from urlparse import urlparse, parse_qs
+    from urllib2 import URLError, build_opener
+    from ConfigParser import SafeConfigParser
+    from StringIO import StringIO
+    from SocketServer import ThreadingMixIn
+    
+except ImportError: # python3
+    from urllib.parse import urlparse, parse_qs
+    from urllib.error import URLError
+    from urllib.request import build_opener
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+    from configparser import SafeConfigParser
+    from io import StringIO
+    from socketserver import ThreadingMixIn
+
 import socket
-import urlparse
-import urllib2
 import requests
 import signal
 import os
@@ -40,9 +54,7 @@ import tempfile
 import netifaces
 import pprint
 import argparse
-import ConfigParser
 import xdg.BaseDirectory
-import StringIO
 import logging
 import distutils.version
 import threading
@@ -51,7 +63,6 @@ import gmusicapi.utils
 import eyed3.id3
 import random
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from SocketServer import ThreadingMixIn
 from gmusicapi.exceptions import CallFailure
 try:
     import daemon
@@ -63,16 +74,16 @@ except ImportError:
     pass
 
 
-class MultiThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
+class MultiThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
-class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class GetHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         logger.debug('request path: %s', self.path)
-        parsedPath = urlparse.urlparse(self.path)
-        params = urlparse.parse_qs(parsedPath.query)
+        parsedPath = urlparse(self.path)
+        params = parse_qs(parsedPath.query)
 
         if parsedPath.path == '/get_song' and 'id' in params:
             self._get_song(id=params['id'][0])
@@ -194,8 +205,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         logger.debug('HEAD request path: %s', self.path)
-        parsedPath = urlparse.urlparse(self.path)
-        params = urlparse.parse_qs(parsedPath.query)
+        parsedPath = urlparse(self.path)
+        params = parse_qs(parsedPath.query)
 
         if parsedPath.path == '/get_song' and 'id' in params:
             self._get_song(id=params['id'][0], only_headers=True)
@@ -322,8 +333,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         mp3 = opener.open(url)
         logger.debug('tag size: %s byte', tagsSize)
         logger.debug('content estimated size: %s byte', songSize)
-        if mp3.info().getheader('Content-Length'):
-            songSize = int(mp3.info().getheader('Content-Length'))
+        if mp3.info().get('Content-Length'):
+            songSize = int(mp3.info().get('Content-Length'))
         logger.debug('content size from HTTP headers: %s byte', songSize)
 
         self._send_headers(200, 'audio/mpeg', 'inline; filename=%s.mp3' % id.strip(), ((tagsSize if not do_shoutcast else 0) + songSize) if (songSize > 0)
@@ -419,7 +430,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.info(
             'Getting %s tracks from station with id \'%s\'', numTracks, id)
         logger.debug(pprint.pformat(station))
-        self.wfile.write('#EXTM3U\n')
+        self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
@@ -441,7 +452,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.info('Getting %s tracks from a new %s station based on %s id \'%s\'' % (
             numTracks, 'transient' if transient != 'no' else 'persistent', type, id))
         logger.debug(pprint.pformat(station))
-        self.wfile.write('#EXTM3U\n')
+        self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
         for track in station:
             if 'nid' in track:
@@ -457,7 +468,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         wholeCollection = self._robust_retry(lambda: api.get_all_songs())
 
         targetPlaylist = None
-        self.wfile.write('#EXTM3U\n')
+        self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
 
         if id[0] == 'A' and id[1] == 'M':
@@ -507,7 +518,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.info('Getting the tracks of the album with id \'%s\': %s - %s',
                     id, album['name'], album['artist'])
         logger.debug(pprint.pformat(album))
-        self.wfile.write('#EXTM3U\n')
+        self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
         if 'tracks' in album:
             for track in album['tracks']:
@@ -523,7 +534,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.info('Getting %s top tracks of the artist with id \'%s\': %s',
                     numTracks, id, artist['name'])
         logger.debug(pprint.pformat(artist))
-        self.wfile.write('#EXTM3U\n')
+        self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
         if 'topTracks' in artist:
             for track in artist['topTracks']:
@@ -540,7 +551,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     'name'], 'plain-text' if format == 'text' else 'M3U')
         logger.debug(pprint.pformat(artist))
         if format.lower().strip() != 'text':
-            self.wfile.write('#EXTM3U\n')
+            self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated list:' if format.lower().strip()
                      == 'text' else 'generated list:\n#EXTM3U')
         if 'albums' in artist:
@@ -556,7 +567,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     logger.debug(line)
 
     def _get_matches(self, matches, numTracks):
-        self.wfile.write('#EXTM3U\n')
+        self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
         for song in matches:
             track = song['track']
@@ -586,7 +597,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         logger.info('Getting your collection: %s tracks', len(songs))
         logger.debug(pprint.pformat(songs))
-        self.wfile.write('#EXTM3U\n')
+        self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:\n#EXTM3U')
         for track in songs:
             if 'id' in track or 'nid' in track:
@@ -711,8 +722,8 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def handle_one_request(self):
         try:
-            BaseHTTPServer.BaseHTTPRequestHandler.handle_one_request(self)
-        except CallFailure, e:
+            BaseHTTPRequestHandler.handle_one_request(self)
+        except CallFailure as e:
             if '401 Client Error: Unauthorized' in e.message and config['device_id'] != '**auto**':
                 logger.warning(
                     'Server denied authorization, trying to reconnect...')
@@ -727,7 +738,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     sys.exit(1)
             else:
                 raise
-        except socket.error, e:
+        except socket.error as e:
             if e[0] == errno.ECONNRESET:
                 logger.warning('Detected connection reset.')
             elif e[0] == errno.EPIPE:
@@ -764,7 +775,7 @@ def signalHandler(signal, frame):
 
 def getOptions(filename):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=file,
+    parser.add_argument('-c', '--config', type=open,
                         help='specific configuration file to use')
     parser.add_argument(
         '-e', '--email', help='email address of the Google account [required]')
@@ -804,21 +815,21 @@ def getOptions(filename):
     parser.add_argument(
         '--keyring-entry', help='keyring entry to use, required if --keyring-service is used')
 
-    config = ConfigParser.SafeConfigParser()
+    config = SafeConfigParser()
     args = parser.parse_args()
-    fp = StringIO.StringIO('[dummy]\n')
+    fp = StringIO('[dummy]\n')
     config.readfp(fp)
     if args.config:
-        fp = StringIO.StringIO('[dummy]\n' + args.config.read())
+        fp = StringIO('[dummy]\n' + args.config.read())
         config.readfp(fp)
     else:
         for path in reversed(list(xdg.BaseDirectory.load_config_paths(filename))):
-            fp = StringIO.StringIO('[dummy]\n' + open(path, 'r').read())
+            fp = StringIO('[dummy]\n' + open(path, 'r').read())
             config.readfp(fp)
     configValues = dict(config.items('dummy'))
 
     # adjust some names in order to make work configparser with argparse
-    for key in configValues.keys():
+    for key in list(configValues.keys()):
         if '-' in key:
             configValues[key.replace('-', '_')] = configValues.pop(key)
 
@@ -890,7 +901,7 @@ def checkLatestVersion():
         if distutils.version.StrictVersion(programVersion) < distutils.version.StrictVersion(latestVersion):
             logger.warning(
                 'There is a new %s release of %s. Consider the idea to update your installation in order to keep it working!\n', latestVersion, programName)
-    except urllib2.URLError:
+    except URLError:
         logger.debug('Error in fetching version information')
     except ValueError:
         logger.debug('Error on malformed version data (\'%s\', \'%s\')',
@@ -923,7 +934,7 @@ def getKeyringPassword():
                          'keyring_entry'], config['keyring_service'])
 
         return password
-    except Exception, e:
+    except Exception as e:
         logger.error('Failed to access keyring: %s', e.message)
         sys.exit(1)
 
@@ -954,7 +965,7 @@ if __name__ == '__main__':
 
     # remove previous root logging handler
     logger = logging.getLogger()
-    map(logger.removeHandler, logger.handlers[:])
+    list(map(logger.removeHandler, logger.handlers[:]))
 
     # initial setup of my logger
     logger = logging.getLogger(programName)
@@ -976,7 +987,7 @@ if __name__ == '__main__':
             fileHandler.setFormatter(logging.Formatter(
                 '[%(levelname)s] (%(module)s:%(lineno)s): %(message)s'))
 
-    logger.info(u'%s %s (© %s)\n', programDescription,
+    logger.info('%s %s (© %s)\n', programDescription,
                 programVersion, programMainAuthor)
 
     # preliminar setup for the daemonaization
@@ -1020,7 +1031,7 @@ if __name__ == '__main__':
     if config['host'] == '**auto**':
         config['host'] = autodetectLocalIP()
 
-    opener = urllib2.build_opener()
+    opener = build_opener()
     opener.addheaders = [('User-agent', '%s %s' %
                           (programDescription, programVersion))]
 
