@@ -27,15 +27,14 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try: # python2
+try: # Python 2
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
     from urlparse import urlparse, parse_qs
     from urllib2 import URLError, build_opener
     from ConfigParser import SafeConfigParser
     from StringIO import StringIO
     from SocketServer import ThreadingMixIn
-    
-except ImportError: # python3
+except ImportError: # Python 3
     from urllib.parse import urlparse, parse_qs
     from urllib.error import URLError
     from urllib.request import build_opener
