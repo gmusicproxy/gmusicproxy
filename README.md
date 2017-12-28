@@ -32,6 +32,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 ### Changelog
 - 1.0.9-beta (unreleased):
+  - experimental Python 3 support: soon the support for 2.7 version will be removed (thanks to Pierre Karashchuk)
   - fix issues with missing recording year and with `__get_matches` function
   - less strict version requirement for gmusicapi (easy life for packaging managers)
 - 1.0.8 (2017-02-07):
@@ -136,7 +137,7 @@ Feel free to open [bug reports][4] (complete of verbose output produced with opt
 ## Setup
 ### Requirements
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
-- a **Python** 2.7 interpreter
+- a **Python** 2.7 interpreter (experimental support for **Python** 3 is included)
 - some python libs: *gmusicapi*, *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
