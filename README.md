@@ -123,15 +123,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 
 ## Support
 ### Donations
-Get this project as it is: I will work on it as long as I have fun in developing and using it. I share it as Open-Source code because I believe in OSS and to open it to external contributions.
-
-The access to an All Access subscription is strictly necessary to continue its development: in the last months I've scarcely used this service. At the moment I'm keeping the subscription to be able to maintain the project. I could stop it in the next months.
-
-If you use and appreciate GMusicProxy, consider the possibility to [donate][8] a small amount to support the maintenance and improvement of the project. For sake of transparency I will report the amount of donations I receive each year and the percentage of Google Play Music subscription fees you are covering (8€ per month as early subscriber) with them:
-
-- year 2015: 15€ on 96€ ![Progress](http://progressed.io/bar/15?scale=96&suffix=€)
-- year 2016: 96€ on 96€ ![Progress](http://progressed.io/bar/96?scale=96&suffix=€)
-- year 2017: 96€ on 96€ ![Progress](http://progressed.io/bar/96?scale=96&suffix=€)
+At the moment I'm looking for another Maintainer for the project. I'll continue to accept [donations][8] as long as I can't find who succeed me just to be able to keep up the Google server subscription.  Many thanks for the donations received in these years. 
 
 ### Issues
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
