@@ -1,6 +1,8 @@
-# GMusicProxy – Google Play Music Proxy
+# GMusicProxy – Google Play Music Proxy 
 
 *"Let's stream Google Play Music using any media-player"*
+
+*[UNMAINTAINED - see https://github.com/diraimondo/gmusicproxy/issues/105]* 
 
 © [Mario Di Raimondo](mailto:info@gmusicproxy.net)
 site: http://gmusicproxy.net
