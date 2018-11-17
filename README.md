@@ -2,10 +2,10 @@
 
 *"Let's stream Google Play Music using any media-player"*
 
-© [Mario Di Raimondo](mailto:info@gmusicproxy.net)
-site: http://gmusicproxy.net
+https://gmusicproxy.github.io
 
 contributors:
+- Mario Di Raimondo
 - [Nick Depinet](mailto:depinetnick@gmail.com)
 - [Adam Prato](mailto:adam.prato@gmail.com)
 - [Pierre Karashchuk](mailto:krchtchk@gmail.com)
@@ -13,8 +13,6 @@ contributors:
 - [Mark Gillespie](mailto:mark.gillespie@gmail.com)
 
 License: **GPL v3**
-
-**IMPORTANT: The project is now UNMAINTAINED, don't open new issue reports: see** https://github.com/diraimondo/gmusicproxy/issues/105
 
 ## About
 This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and to manage M3U playlists (e.g., [MPD server][1], [VLC][2], ...). It can work also with a free account without All Access extras.
