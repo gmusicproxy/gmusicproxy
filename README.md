@@ -1,4 +1,4 @@
-# GMusicProxy – Google Play Music Proxy 
+# GMusicProxy - Google Play Music Proxy 
 
 *"Let's stream Google Play Music using any media-player"*
 
@@ -11,6 +11,7 @@ contributors:
 - [Pierre Karashchuk](mailto:krchtchk@gmail.com)
 - [Alex Busenius](mailto:)
 - [Mark Gillespie](mailto:mark.gillespie@gmail.com)
+- Justin Woody
 
 License: **GPL v3**
 
@@ -31,6 +32,10 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
 ### Changelog
+- 1.0.10
+  - Added JSON end points to return data for experimental Volumio Plugin
+  - 500 requests return README.md as HTML
+  - 
 - 1.0.9-beta (unreleased):
   - experimental Python 3 support: soon the support for 2.7 version will be removed (thanks to Pierre Karashchuk)
   - fix issues with missing recording year and with `__get_matches` function
@@ -141,7 +146,7 @@ In order to build some dependencies, you need for sure a working building system
 
     - `sudo apt-get install python-pip`
     - get a copy of the sources using one of these methods:
-      - `git clone https://github.com/diraimondo/gmusicproxy.git`
+      - `git clone https://github.com/gmusicproxy:/gmusicproxy.git`
       - download and extract a [tar][6] or [zip][7] archive of the last version
     - install it and all the dependencies using `sudo pip install -r requirements.txt` from the inside of the folder
     - use it from everywhere: `GMusicProxy`
@@ -156,7 +161,7 @@ In order to build some dependencies, you need for sure a working building system
     ```bash
     sudo apt-get install python-pip python-virtualenv virtualenvwrapper
     mkvirtualenv -p /usr/bin/python2 gmusicproxy
-    git clone https://github.com/diraimondo/gmusicproxy.git
+    git clone https://github.com/gmusicproxy/gmusicproxy.git
     cd gmusicproxy
     pip install -r requirements.txt
     ```
@@ -344,14 +349,13 @@ Here a list of the supported requests (with some restricted by the availability 
   ```
 
 
-[0]: http://gmusicproxy.net/
+[0]: https://gmusicproxy.github.io
 [1]: http://www.musicpd.org/
 [2]: http://www.videolan.org/vlc/
 [3]: https://github.com/simon-weber/gmusicapi
-[4]: https://github.com/diraimondo/gmusicproxy/issues
-[5]: https://github.com/diraimondo/gmusicproxy/pulls
+[4]: https://github.com/gmusicproxy/gmusicproxy/issues
+[5]: https://github.com/gmusicproxy/gmusicproxy/pulls
 [6]: https://github.com/leoedin/gmusicproxy/archive/master.tar.gz
 [7]: https://github.com/leoedin/gmusicproxy/archive/master.zip
 [8]: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=mario%2ediraimondo%40gmail%2ecom&lc=US&item_name=GMusicProxy%20support&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
 
-![ga tracker](https://www.google-analytics.com/collect?v=1&a=257770996&t=pageview&dl=https%3A%2F%2Fgithub.com%2Fdiraimondo%2Fgmusicproxy&ul=en-us&de=UTF-8&cid=978224512.1377738459&tid=UA-3018229-6&z=887657232 "ga tracker")

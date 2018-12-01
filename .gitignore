@@ -17,6 +17,8 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+include
+share
 
 # Installer logs
 pip-log.txt
@@ -33,3 +35,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# PyCharm
+.idea
+
+pip-selfcheck.json
+

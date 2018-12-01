@@ -18,14 +18,14 @@ else:
 setup(
     name='gmusicproxy',
     version=version,
-    author='Mario Di Raimondo',
+    author='Mario Di Raimondo et al',
     author_email='mario.diraimondo@gmail.com',
-    url='https://github.com/diraimondo/gmusicproxy',
+    url='https://github.com/gmusicproxy/gmusicproxy',
     scripts=[GMUSICPROXYFILE],
     license=open('LICENSE').read(),
     description='Google Play Music Proxy - "Let\'s stream Google Play Music using any music program"',
     long_description=(open('README.md').read()),
     install_requires=['gmusicapi>=10.1.0,<11.0.0', 'netifaces>=0.10.4',
-                      'pyxdg>=0.25', 'eyed3>=0.7.8', 'python-daemon>=2.0.5' if not os.name == 'nt' else ''],
+                      'pyxdg>=0.25', 'eyed3>=0.7.8', 'python-daemon>=2.0.5' if not os.name == 'nt' else '', 'Markdown>=3.1.1'],
     extras_require={'keyring': 'keyring>=10.0'}
 )
