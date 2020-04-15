@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Google Play Music Proxy © Mario Di Raimondo < mario.diraimondo (at) gmail.com >
@@ -10,6 +10,7 @@
 #  - Pierre Karashchuk < krchtchk (at) gmail.com >
 #  - Alex Busenius
 #  - Mark Gillespie < mark.gillespie (at) gmail.com >
+#  - Justin Woody
 #
 # license: GPL v3
 #
@@ -27,21 +28,13 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try: # Python 2
-    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-    from urlparse import urlparse, parse_qs
-    from urllib2 import URLError, build_opener
-    from ConfigParser import SafeConfigParser
-    from StringIO import StringIO
-    from SocketServer import ThreadingMixIn
-except ImportError: # Python 3
-    from urllib.parse import urlparse, parse_qs
-    from urllib.error import URLError
-    from urllib.request import build_opener
-    from http.server import HTTPServer, BaseHTTPRequestHandler
-    from configparser import SafeConfigParser
-    from io import StringIO
-    from socketserver import ThreadingMixIn
+from urllib.parse import urlparse, parse_qs
+from urllib.error import URLError
+from urllib.request import build_opener
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from configparser import ConfigParser
+from io import StringIO
+from socketserver import ThreadingMixIn
 
 import socket
 import requests
@@ -105,7 +98,7 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def send_json_response(self, json_data):
         self._send_headers(200, 'application/json')
-        self.wfile.write(json_data)
+        self.wfile.write(bytes(json_data, 'utf-8'))
         return True
 
     def handle_ifl_station(self, params):
@@ -138,8 +131,8 @@ class GetHandler(BaseHTTPRequestHandler):
         if not ('type' in params and ('title' in params or 'artist' in params)):
             return False
         p_type = params['type'][0].lower().strip()
-        result = self._search(type=p_type, query_title=params.get('title', [''])[0].decode('latin-1'),
-                              query_artist=params.get('artist', [''])[0].decode('latin-1'), exact=params.get('exact', ['no'])[0].lower().strip(),
+        result = self._search(type=p_type, query_title=params.get('title', [''])[0],
+                              query_artist=params.get('artist', [''])[0], exact=params.get('exact', ['no'])[0].lower().strip(),
                               max_results=params.get('num_tracks', [None])[0])
         if result and len(result) > 0:
             if p_type == 'artist':
@@ -164,8 +157,8 @@ class GetHandler(BaseHTTPRequestHandler):
         if not ('type' in params and ('title' in params or 'artist' in params)) or self._is_invalid_persistent(params):
             return False
         s_type = params.get('type', ['artist'])[0].lower().strip()
-        result = self._search(type=s_type, query_title=params.get('title', [''])[0].decode('latin-1'),
-                              query_artist=params.get('artist', [''])[0].decode('latin-1'), exact=params.get('exact', ['no'])[0].lower().strip())
+        result = self._search(type=s_type, query_title=params.get('title', [''])[0],
+                              query_artist=params.get('artist', [''])[0], exact=params.get('exact', ['no'])[0].lower().strip())
         if result and len(result) > 0:
             logger.info(pprint.pformat(result))
             self.send_empty_aa_response(params)
@@ -201,7 +194,7 @@ class GetHandler(BaseHTTPRequestHandler):
     def _send_500(self, params):
         self._send_headers(500)
         logger.warning('Unknown command \'%s\' or missing required parameter!', params.get(self.REQ_PATH))
-        self.wfile.write(help_page)
+        self.wfile.write(help_page.encode('utf-8'))
         return True
 
     def _send_headers(self, response_code=200, content_type=None, content_disposition=None, content_length=None, icy_metaint=None, icy_name=None):
@@ -231,7 +224,7 @@ class GetHandler(BaseHTTPRequestHandler):
     @staticmethod
     def _icy_metadata(album=None, artist=None, title=None):
         text = 'StreamTitle=\'%ss\';' % (
-            GetHandler._icy_name(album, artist, title).decode('utf-8'))
+            GetHandler._icy_name(album, artist, title))
         metadata = (chr(len(text)) + text).ljust(len(text) * 16 + 1, chr(0))
         return metadata.encode('utf-8')
 
@@ -787,7 +780,7 @@ def getOptions(filename):
     parser.add_argument(
         '--keyring-entry', help='keyring entry to use, required if --keyring-service is used')
 
-    gmp_config = SafeConfigParser()
+    gmp_config = ConfigParser()
     args = parser.parse_args()
     fp = StringIO('[dummy]\n')
     gmp_config.readfp(fp)
@@ -928,8 +921,7 @@ if __name__ == '__main__':
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
-    programMainAuthor = 'Mario Di Raimondo'
-    programVersion = '1.0.10'
+    programVersion = '2.0.0'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
@@ -959,8 +951,7 @@ if __name__ == '__main__':
             fileHandler.setFormatter(logging.Formatter(
                 '[%(levelname)s] (%(module)s:%(lineno)s): %(message)s'))
 
-    logger.info('%s %s (© %s)\n', programDescription,
-                programVersion, programMainAuthor)
+    logger.info('%s %s\n', programDescription, programVersion)
 
     # preliminar setup for the daemonaization
     if config['daemon']:

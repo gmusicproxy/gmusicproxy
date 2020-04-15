@@ -31,11 +31,98 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - request a transient (it will be not registered in your account) station based on any search (a.k.a. "Instant Mix")
 - stream any songs as standard MP3 complete of IDv3 tag with all the information and album image
 
+### URL-based interface
+The only way to use the service is to query the proxy by means of properly formatted HTTP requests over the configured TCP port. Such URLs can be used directly in music programs or in scripts or in any browser. A URL looks like this: `http://host:port/command?param_1=value&param_2=value`. I don't apply any validation to the submitted values: please, be nice with the proxy and don't exploit it! :)
+
+Consider that any song, album, artist, playlist or station got a unique ID in Google Music API but there are many methods to discover them.
+
+Here a list of the supported requests (with some restricted by the availability of a All Access subscription):
+
+- `/get_collection`: reports an M3U playlist with all the songs in your personal collection; the resulting list can be shuffled and/or filtered using the rating; note that not all the rated (liked) songs belong to your collection.
+  Allowed parameters:
+     - `shuffle`: if the collection has to be shuffled [default: no]
+	 - `rating`: an integer value (typically between 1-5) to filter out low rated or unrated songs form your collection
+- `/search_id`: reports the unique ID as result of a search for an artist, a song or an album.
+  Allowed parameters:
+     - `type`: search for `artist`, `album` or `song` [required]
+     - `title`: a string to search in the title of the album or of the song
+     - `artist`: a string to search in the name of the artist in any kind of search
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `yes`]
+- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song); it is also possible to get the full list of matches reported by Google Music using search with `type=matches` [requires A.A.].
+  Allowed parameters:
+     - `type`: search for `artist`, `album`, `song` or `matches` [required]
+     - `title`: a string to search in the title of the album or of the song
+     - `artist`: a string to search in the name of the artist in any kind of search
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song; it doesn't make sense with a search for `matches` [default: `no`]
+     - `num_tracks`: the number of top songs to return in a search for artist [default: 20]
+- `/get_all_stations`: reports a list of registered stations as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one station per line)  [requires A.A.].
+  Allowed parameters:
+     - `format`: `m3u` for an M3U list or `text` for a plain-text list with lines like `Name of the Station|URL to an M3U playlist` [default: `m3u`]
+     - `separator`: a separator for the plain-text lists [default: `|`]
+     - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the station is totally omitted) [default: `no`]
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+- `/get_all_playlists`: reports the playlists registered in the account as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one playlist per line).
+  The allowed parameters are the same as `/get_all_stations`.
+- `/get_new_station_by_search`: reports as M3U playlist the content of a new (transient or permanent) station created on the result of a search for artist/album/song (a.k.a. "Instant Mix") [requires A.A.].
+  Allowed parameters:
+     - `type`: search for `artist`, `album` or `song` [required]
+     - `title`: a string to search in the title of the album or of the song
+     - `artist`: a string to search in the name of the artist in any kind of search
+     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
+     - `num_tracks`: the number of songs to extract from the new station [default: 20]
+     - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
+     - `name`: the name of the persistent station to create [required if `transient` is `no`]
+- `/get_new_station_by_id`: reports as M3U playlist the content of a new (transient or permanent) station created on a specified id of an artist/album/song [requires A.A.].
+  Allowed parameters:
+     - `id`: the unique identifier of the artist/album/song [required]
+     - `type`: the type of id specified among `artist`, `album` and `song` [required]
+     - `num_tracks`: the number of songs to extract from the new station [default: 20]
+     - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
+     - `name`: the name of the persistent station to create [required if `transient` is `no`]
+- `/get_station`: reports an M3U playlist of tracks associated to the given station  [requires A.A.].
+  Allowed parameters:
+     - `id`: the unique identifier of the station [required]
+     - `num_tracks`: the number of tracks to extract [default: 20]
+- `/get_ifl_station`: reports an M3U playlist of tracks associated to the automatic "I'm feeling lucky" station  [requires A.A.].
+  Allowed parameters:
+     - `num_tracks`: the number of tracks to extract [default: 20]
+- `/get_playlist`: reports the content of a registered playlist in the M3U format; the list can be also shuffled.
+  Allowed parameters:
+     - `id`: the unique identifier of the playlist [required]
+     - `shuffle`: if the list has to be shuffled [default: no]
+- `/get_album`: reports the content of an album as an M3U playlist.
+  Allowed parameters:
+     - `id`: the unique identifier of the album [required]
+- `/get_song`: streams the content of the specified song as a standard MP3 file with IDv3 tag.
+  Allowed parameters:
+     - `id`: the unique identifier of the song [required]
+- `/get_top_tracks_artist`: reports an M3U playlist with the top songs of a specified artist [requires A.A.].
+  Allowed parameters:
+     - `id`: the unique identifier of the artist [required]
+     - `type`: the type of id specified among `artist`, `album` and `song` [required]
+     - `num_tracks`: the number of top songs to return [default: 20]
+- `/get_discography_artist`: reports the list of available albums of a specified artist as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one album per line)  [requires A.A.].
+  Allowed parameters:
+     - `id`: the unique identifier of the artist [required]
+     - `format`: `m3u` for an M3U list or `text` for a plain-text list with lines like `Name of Album|Year|URL to an M3U playlist` [default: `m3u`]
+     - `separator`: a separator for the plain-text lists [default: `|`]
+     - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the album is totally omitted) [default: `no`]
+- `/like_song`: reports a positive rating on the song with specified id.
+  Allowed parameters:
+     - `id`: the unique identifier of the song [required]
+- `/dislike_song`: reports a negative rating on the song with specified id.
+  Allowed parameters:
+     - `id`: the unique identifier of the song [required]
+- `get_version`: displays current version in JSON format
+
 ### Changelog
-- 1.0.10
+- 2.0.0 (2020-04-15)
   - Added JSON end points to return data for experimental Volumio Plugin
   - 500 requests return README.md as HTML
-  - 
+  - Dropped Python 2 support
+  - Updated Docker image with Python 3.7
+  - Updated gmusicapi to version 13.0.0
+  - Code clean up
 - 1.0.9-beta (unreleased):
   - experimental Python 3 support: soon the support for 2.7 version will be removed (thanks to Pierre Karashchuk)
   - fix issues with missing recording year and with `__get_matches` function
@@ -125,8 +212,6 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - GMusicProxyGui (a C# GUI for the GMusicProxy): https://github.com/Poket-Jony/GMusicProxyGui
 
 ## Support
-### Donations
-At the moment I'm looking for another Maintainer for the project. I'll continue to accept [donations][8] as long as I can't find who succeed me just to be able to keep up the Google server subscription.  Many thanks for the donations received in these years. 
 
 ### Issues
 Feel free to open [bug reports][4] (complete of verbose output produced with options `--debug` and `--log`) on GitHub, to fork the project and to make [pull requests][5] for your contributions.
@@ -134,47 +219,25 @@ Feel free to open [bug reports][4] (complete of verbose output produced with opt
 ## Setup
 ### Requirements
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
-- a **Python** 2.7 interpreter (experimental support for **Python** 3 is included)
+- a **Python** 3.6 or 3.7 interpreter.
 - some python libs: *gmusicapi*, *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
 
 ### Installation
 The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless they work on any other GNU/Linux system using the right substitute of `apt-get`. It is known to work also on Mac OS X and Windows systems.
 
-In order to build some dependencies, you need for sure a working building system with `sudo apt-get install build-essential python2.7-dev`. It could be useful to add some necessary packages: `sudo apt-get install libffi-dev  libssl-dev`.
+In order to build/install GMusicProxy, the following should work on Ubuntu/Debian based systems:
 
-- The easiest way, but not suggested, is to use the `pip` command to install the proxy with all the dependencies from PyPI and GitHub repositories:
+```bash
+sudo apt install python3 python3-dev git
+git clone https://github.com/gmusicproxy:/gmusicproxy.git
+cd gmusicproxy
+virtualenv -p python3.7 venv
+. venv/bin/activate
+pip install -r requirements.txt
+python GMusicProxy
+```
 
-    - `sudo apt-get install python-pip`
-    - get a copy of the sources using one of these methods:
-      - `git clone https://github.com/gmusicproxy:/gmusicproxy.git`
-      - download and extract a [tar][6] or [zip][7] archive of the last version
-    - install it and all the dependencies using `sudo pip install -r requirements.txt` from the inside of the folder
-    - use it from everywhere: `GMusicProxy`
-
-  The `pip install ...` command could require the options `--allow-external eyed3 --allow-unverified eyed3` on some systems in order to validate the installation of `eyed3`.
-
-  Importante note: the usage of `sudo pip ...` commands could mess up your main packaging system; consider the next method.
-
-- The right way to use an under-development python project makes use of `virtualenv` and `virtualenvwrapper` utilities:
-  - install the proxy once:
-
-    ```bash
-    sudo apt-get install python-pip python-virtualenv virtualenvwrapper
-    mkvirtualenv -p /usr/bin/python2 gmusicproxy
-    git clone https://github.com/gmusicproxy/gmusicproxy.git
-    cd gmusicproxy
-    pip install -r requirements.txt
-    ```
-    note: it could be necessary to close/reopen the shell in order to use virtualenvwrapper aliases
-  - launch the proxy when you need it:
-
-    ```bash
-    workon gmusicproxy
-    GMusicProxy
-    ```
-  - if you need to upgrade the proxy and its dependencies:
-    - use the option `--upgrade` on the `pip` installation command (e.g., `pip install --upgrade -r requirements`), or
-    - clean-up the virtualenv using `deactivate ; rmvirtualenv gmusicproxy` and reinstall everything as before.
+- The `pip install` command could require the options `--allow-external eyed3 --allow-unverified eyed3` on some systems in order to validate the installation of `eyed3`.
 
 ## Usage
 With the service running on a computer on the LAN, it can be used by any others of the same network.
@@ -233,89 +296,6 @@ E.g. for KWallet, you can list available service names and entries as follows:
   kwallet-query -l kdewallet -f "Passwords"
   ```
 
-### URL-based interface
-The only way to use the service is to query the proxy by means of properly formatted HTTP requests over the configured TCP port. Such URLs can be used directly in music programs or in scripts or in any browser. A URL looks like this: `http://host:port/command?param_1=value&param_2=value`. I don't apply any validation to the submitted values: please, be nice with the proxy and don't exploit it! :)
-
-Consider that any song, album, artist, playlist or station got a unique ID in Google Music API but there are many methods to discover them.
-
-Here a list of the supported requests (with some restricted by the availability of a All Access subscription):
-
-- `/get_collection`: reports an M3U playlist with all the songs in your personal collection; the resulting list can be shuffled and/or filtered using the rating; note that not all the rated (liked) songs belong to your collection.
-  Allowed parameters:
-     - `shuffle`: if the collection has to be shuffled [default: no]
-	 - `rating`: an integer value (typically between 1-5) to filter out low rated or unrated songs form your collection
-- `/search_id`: reports the unique ID as result of a search for an artist, a song or an album.
-  Allowed parameters:
-     - `type`: search for `artist`, `album` or `song` [required]
-     - `title`: a string to search in the title of the album or of the song
-     - `artist`: a string to search in the name of the artist in any kind of search
-     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `yes`]
-- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song); it is also possible to get the full list of matches reported by Google Music using search with `type=matches` [requires A.A.].
-  Allowed parameters:
-     - `type`: search for `artist`, `album`, `song` or `matches` [required]
-     - `title`: a string to search in the title of the album or of the song
-     - `artist`: a string to search in the name of the artist in any kind of search
-     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song; it doesn't make sense with a search for `matches` [default: `no`]
-     - `num_tracks`: the number of top songs to return in a search for artist [default: 20]
-- `/get_all_stations`: reports a list of registered stations as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one station per line)  [requires A.A.].
-  Allowed parameters:
-     - `format`: `m3u` for an M3U list or `text` for a plain-text list with lines like `Name of the Station|URL to an M3U playlist` [default: `m3u`]
-     - `separator`: a separator for the plain-text lists [default: `|`]
-     - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the station is totally omitted) [default: `no`]
-     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
-- `/get_all_playlists`: reports the playlists registered in the account as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one playlist per line).
-  The allowed parameters are the same as `/get_all_stations`.
-- `/get_new_station_by_search`: reports as M3U playlist the content of a new (transient or permanent) station created on the result of a search for artist/album/song (a.k.a. "Instant Mix") [requires A.A.].
-  Allowed parameters:
-     - `type`: search for `artist`, `album` or `song` [required]
-     - `title`: a string to search in the title of the album or of the song
-     - `artist`: a string to search in the name of the artist in any kind of search
-     - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
-     - `num_tracks`: the number of songs to extract from the new station [default: 20]
-     - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
-     - `name`: the name of the persistent station to create [required if `transient` is `no`]
-- `/get_new_station_by_id`: reports as M3U playlist the content of a new (transient or permanent) station created on a specified id of an artist/album/song [requires A.A.].
-  Allowed parameters:
-     - `id`: the unique identifier of the artist/album/song [required]
-     - `type`: the type of id specified among `artist`, `album` and `song` [required]
-     - `num_tracks`: the number of songs to extract from the new station [default: 20]
-     - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
-     - `name`: the name of the persistent station to create [required if `transient` is `no`]
-- `/get_station`: reports an M3U playlist of tracks associated to the given station  [requires A.A.].
-  Allowed parameters:
-     - `id`: the unique identifier of the station [required]
-     - `num_tracks`: the number of tracks to extract [default: 20]
-- `/get_ifl_station`: reports an M3U playlist of tracks associated to the automatic "I'm feeling lucky" station  [requires A.A.].
-  Allowed parameters:
-     - `num_tracks`: the number of tracks to extract [default: 20]
-- `/get_playlist`: reports the content of a registered playlist in the M3U format; the list can be also shuffled.
-  Allowed parameters:
-     - `id`: the unique identifier of the playlist [required]
-     - `shuffle`: if the list has to be shuffled [default: no]
-- `/get_album`: reports the content of an album as an M3U playlist.
-  Allowed parameters:
-     - `id`: the unique identifier of the album [required]
-- `/get_song`: streams the content of the specified song as a standard MP3 file with IDv3 tag.
-  Allowed parameters:
-     - `id`: the unique identifier of the song [required]
-- `/get_top_tracks_artist`: reports an M3U playlist with the top songs of a specified artist [requires A.A.].
-  Allowed parameters:
-     - `id`: the unique identifier of the artist [required]
-     - `type`: the type of id specified among `artist`, `album` and `song` [required]
-     - `num_tracks`: the number of top songs to return [default: 20]
-- `/get_discography_artist`: reports the list of available albums of a specified artist as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one album per line)  [requires A.A.].
-  Allowed parameters:
-     - `id`: the unique identifier of the artist [required]
-     - `format`: `m3u` for an M3U list or `text` for a plain-text list with lines like `Name of Album|Year|URL to an M3U playlist` [default: `m3u`]
-     - `separator`: a separator for the plain-text lists [default: `|`]
-     - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the album is totally omitted) [default: `no`]
-- `/like_song`: reports a positive rating on the song with specified id.
-  Allowed parameters:
-     - `id`: the unique identifier of the song [required]
-- `/dislike_song`: reports a negative rating on the song with specified id.
-  Allowed parameters:
-     - `id`: the unique identifier of the song [required]
-
 ### Examples of integration
 #### [MPD][1]
 - You can copy any M3U list generated by the proxy in the playlists registered inside MPD. MPD usually keeps the playlists inside the folder specified by `playlist_directory` in its configuration file `mpd.conf`.
@@ -342,12 +322,22 @@ Here a list of the supported requests (with some restricted by the availability 
   ```bash
   vlc 'http://localhost:9999/get_by_search?type=album&artist=Rolling%20Stones&title=tattoo&exact=no'
   ```
+
 - You can automatically choose at random one registered station.
 
   ```bash
   curl -s 'http://localhost:9999/get_all_stations?format=text&only_url=yes' | sort -R | head -n1 | vlc -
   ```
 
+### [Docker][6]
+
+- To build and run the Docker container, follow these steps
+
+  ```bash
+  sudo docker build -t gmusicproxy:latest .
+  # Note that you may need to adjust the volume argument to point to your gmusicproxy.cfg file
+  sudo docker run -v /home/ubuntu/gmusicproxy.cfg:/root/.config/gmusicproxy.cfg -p 9999:9999 gmusicproxy:latest
+  ```
 
 [0]: https://gmusicproxy.github.io
 [1]: http://www.musicpd.org/
@@ -355,7 +345,4 @@ Here a list of the supported requests (with some restricted by the availability 
 [3]: https://github.com/simon-weber/gmusicapi
 [4]: https://github.com/gmusicproxy/gmusicproxy/issues
 [5]: https://github.com/gmusicproxy/gmusicproxy/pulls
-[6]: https://github.com/leoedin/gmusicproxy/archive/master.tar.gz
-[7]: https://github.com/leoedin/gmusicproxy/archive/master.zip
-[8]: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=mario%2ediraimondo%40gmail%2ecom&lc=US&item_name=GMusicProxy%20support&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
-
+[6]: https://docker.com/
