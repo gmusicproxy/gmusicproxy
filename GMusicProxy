@@ -29,7 +29,6 @@
 #
 
 from urllib.parse import urlparse, parse_qs
-from urllib.error import URLError
 from urllib.request import build_opener
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from configparser import ConfigParser
@@ -268,8 +267,7 @@ class GetHandler(BaseHTTPRequestHandler):
         url = self._robust_retry(lambda: api.get_stream_url(song_id=id))
         logger.debug('streaming url: %s', url)
 
-        do_shoutcast = config[
-            'shoutcast_metadata'] and 'icy-metadata' in self.headers
+        do_shoutcast = config['shoutcast_metadata'] and 'icy-metadata' in self.headers
 
         mp3 = opener.open(url)
         logger.debug('tag size: %s byte', tagsSize)
@@ -361,7 +359,7 @@ class GetHandler(BaseHTTPRequestHandler):
         results = self._robust_retry(gmusic_func)
         logger.debug(pprint.pformat(results))
         if not is_text:
-            self.wfile.write('#EXTM3U\n')
+            self.wfile.write(b'#EXTM3U\n')
         logger.debug('generated playlist:%s', ('' if is_text else '\n#EXTM3U'))
         for result in results:
             if 'id' in result:
@@ -856,9 +854,11 @@ def autodetectLocalIP():
     return '127.0.0.1'
 
 def checkLatestVersion():
-    logger.debug('Fetching lastest version of %s...', programName)
+    logger.debug('Fetching lastest version of %s from %s', programName, urlLatestVersion)
     try:
-        latest_version = opener.open(urlLatestVersion).read()
+        version_map = requests.get(urlLatestVersion).json()
+        logger.debug('version info is %s', version_map)
+        latest_version = version_map.get('version')
         logger.debug('latest available version: %s', latest_version)
         logger.debug('installed version: %s', programVersion)
         if latest_version == '':
@@ -866,8 +866,8 @@ def checkLatestVersion():
         if distutils.version.StrictVersion(programVersion) < distutils.version.StrictVersion(latest_version):
             logger.warning('There is a new %s release of %s. Consider the idea to update your '
                            'installation in order to keep it working!\n', latest_version, programName)
-    except URLError:
-        logger.debug('Error in fetching version information')
+    except requests.exceptions.HTTPError as http_err:
+        logger.warn(f'Error in fetching version information {http_err}')
     except ValueError:
         logger.debug('Error on malformed version data (\'%s\', \'%s\')',
                      latest_version, programVersion)
@@ -925,7 +925,7 @@ if __name__ == '__main__':
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
-    urlLatestVersion = 'http://gmusicproxy.github.io/latest_version.php'
+    urlLatestVersion = 'https://gmusicproxy.github.io/version.json'
 
     # remove previous root logging handler
     logger = logging.getLogger()
@@ -1017,8 +1017,7 @@ if __name__ == '__main__':
     server.json_version = json.dumps({"version": programVersion})
     config_handlers(server)
 
-    logger.info('Listening on %s:%s...', config[
-                'bind_address'], config['port'])
+    logger.info('Listening on %s:%s...', config['bind_address'], config['port'])
 
     if config['daemon']:
         context_daemon.files_preserve.append(server.fileno())
