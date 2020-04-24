@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Google Play Music Proxy © Mario Di Raimondo < mario.diraimondo (at) gmail.com >
+# Google Play Music Proxy
 # "Let's stream Google Play Music using any music program"
 #
 # contributors:
+#  - Mario Di Raimondo < mario.diraimondo (at) gmail.com >
 #  - Nick Depinet < depinetnick (at) gmail.com >
 #  - Adam Prato < adam.prato (at) gmail.com >
 #  - Pierre Karashchuk < krchtchk (at) gmail.com >
@@ -54,7 +55,7 @@ import gmusicapi.utils
 import eyed3.id3
 import random
 import json
-import GMSongsCache
+import gmusicproxyutils as gmputils
 import datetime
 import markdown
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -79,14 +80,12 @@ class MultiThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 class GetHandler(BaseHTTPRequestHandler):
 
-    REQ_TYPE = 'REQUEST_TYPE'
-    REQ_PATH = 'REQUEST_PATH'
-
     def do_GET(self):
         self._process_request('GET', self.server.get_handlers)
 
     def handle_song(self, params):
-        return 'id' in params and self._get_song(id=params['id'][0])
+        send_icy_meta = 'icy-metadata' in self.headers or params('icy-metadata', False)
+        return 'id' in params and self._get_song(id=params['id'][0], send_icecast=send_icy_meta)
 
     def handle_song_info(self, params):
         info = self._get_song_info(params.get('id', ['~'])[0])
@@ -97,7 +96,7 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def send_json_response(self, json_data):
         self._send_headers(200, 'application/json')
-        self.wfile.write(bytes(json_data, 'utf-8'))
+        self.wfile.write(json_data.encode('utf-8'))
         return True
 
     def handle_ifl_station(self, params):
@@ -107,13 +106,13 @@ class GetHandler(BaseHTTPRequestHandler):
     def handle_album(self, params):
         if not 'id' in params:
             return False
-        self._get_album(id=params['id'][0])
+        self._get_album(id=params['id'][0], params=params)
         return True
 
     def handle_top_tracks_artist(self, params):
         if not 'id' in params:
             return False
-        self._get_top_tracks_artist(id=params['id'][0], numTracks=params.get('num_tracks', [defaultNumberTopTracks])[0])
+        self._get_all_lambda(params, lambda: self._get_top_tracks_artist(params))
         return True
 
     def handle_search_id(self, params):
@@ -135,22 +134,21 @@ class GetHandler(BaseHTTPRequestHandler):
                               max_results=params.get('num_tracks', [None])[0])
         if result and len(result) > 0:
             if p_type == 'artist':
-                self._get_top_tracks_artist(result, numTracks=params.get('num_tracks', [defaultNumberTopTracks])[0])
+                params['id'] = [result]
+                self._get_all_lambda(params, lambda: self._get_top_tracks_artist(params))
             elif p_type == 'song':
                 self._get_song(result)
             elif p_type == 'album':
                 self._get_album(result)
             elif p_type == 'matches':
-                self._write_songs_m3u(result, match_to_track)
+                self._get_all_lambda(params, lambda: result, tuple_function=match_to_track)
         return True
 
     def handle_new_station_by_id(self, params):
         if not ('id' in params and 'type' in params) or self._is_invalid_persistent(params):
             return False
 
-        self._get_new_station(id=params['id'][0], type=params['type'][0].lower().strip(), numTracks=params.get('num_tracks', [defaultNumberTracksStation])[0],
-                                  transient=params.get('transient', ['yes'])[0].lower().strip(), name=params['name'][0] if 'name' in params else transientStationName)
-        return True
+        return self._get_all_lambda(params, lambda: self._get_new_station(params))
 
     def handle_new_station_by_search(self, params):
         if not ('type' in params and ('title' in params or 'artist' in params)) or self._is_invalid_persistent(params):
@@ -159,10 +157,8 @@ class GetHandler(BaseHTTPRequestHandler):
         result = self._search(type=s_type, query_title=params.get('title', [''])[0],
                               query_artist=params.get('artist', [''])[0], exact=params.get('exact', ['no'])[0].lower().strip())
         if result and len(result) > 0:
-            logger.info(pprint.pformat(result))
-            self.send_empty_aa_response(params)
-            #self._get_new_station(id=result, type=s_type, numTracks=params.get('num_tracks', [defaultNumberTracksStation])[0],
-            #                      transient=params.get('transient', ['yes'])[0].lower().strip(), name=params.get('name', [transientStationName])[0])
+            params['id'] = [result]
+            self._get_all_lambda(params, lambda: self._get_new_station(params))
         return True
 
     def do_HEAD(self):
@@ -172,9 +168,9 @@ class GetHandler(BaseHTTPRequestHandler):
         logger.debug('%s request path: %s', request_type, self.path)
         parsed_path = urlparse(self.path)
         params = parse_qs(parsed_path.query)
-        params[self.REQ_TYPE] = request_type
-        params[self.REQ_PATH] = parsed_path.path
-
+        params[gmputils.REQ_TYPE] = request_type
+        params[gmputils.REQ_PATH] = parsed_path.path
+        params[gmputils.REQ_URIINFO] = parsed_path
         dispatch = handlers.get(parsed_path.path, GetHandler._send_500)
 
         dispatch(self, params) or self._send_500(params)
@@ -192,7 +188,7 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def _send_500(self, params):
         self._send_headers(500)
-        logger.warning('Unknown command \'%s\' or missing required parameter!', params.get(self.REQ_PATH))
+        logger.warning('Unknown command \'%s\' or missing required parameter!', params.get(gmputils.REQ_PATH))
         self.wfile.write(help_page.encode('utf-8'))
         return True
 
@@ -218,16 +214,15 @@ class GetHandler(BaseHTTPRequestHandler):
 
     @staticmethod
     def _icy_name(album=None, artist=None, title=None):
-        return ('%s /// %s /// %s' % (artist, album, title)).encode('utf-8')
+        return '%s /// %s /// %s' % (artist, album, title)
 
     @staticmethod
     def _icy_metadata(album=None, artist=None, title=None):
-        text = 'StreamTitle=\'%ss\';' % (
-            GetHandler._icy_name(album, artist, title))
+        text = 'StreamTitle=\'%ss\';' % (GetHandler._icy_name(album, artist, title))
         metadata = (chr(len(text)) + text).ljust(len(text) * 16 + 1, chr(0))
         return metadata.encode('utf-8')
 
-    def _get_song(self, id, only_headers=False):
+    def _get_song(self, id, only_headers=False, send_icecast=False):
         info = self._get_song_info(id)
         if info is None:
             logger.info('Streaming song with id \'%s\'', id)
@@ -239,10 +234,7 @@ class GetHandler(BaseHTTPRequestHandler):
             logger.debug(pprint.pformat(info))
             tags = eyed3.id3.Tag()
             tags.artist = info.get('artist', None)
-            # extra check for support of 'album_artist' by eyed3:
-            # https://bitbucket.org/nicfit/eyed3/commits/9071bba4977f
-            if 'albumArtist' in info and 'album_artist' in dir(tags):
-                tags.album_artist = info['albumArtist']
+            tags.album_artist = info.get('albumArtist', None)
             tags.album = info.get('album', None)
             tags.title = info.get('title', None)
             tags.track_num = info.get('trackNumber', None)
@@ -267,7 +259,7 @@ class GetHandler(BaseHTTPRequestHandler):
         url = self._robust_retry(lambda: api.get_stream_url(song_id=id))
         logger.debug('streaming url: %s', url)
 
-        do_shoutcast = config['shoutcast_metadata'] and 'icy-metadata' in self.headers
+        do_shoutcast = config['shoutcast_metadata'] and send_icecast
 
         mp3 = opener.open(url)
         logger.debug('tag size: %s byte', tagsSize)
@@ -291,7 +283,9 @@ class GetHandler(BaseHTTPRequestHandler):
             self.wfile.write(block)
             writtenBytes += len(block)
             if do_shoutcast:
-                self.wfile.write(self._icy_metadata(tags.album, tags.artist, tags.title))
+                imd = self._icy_metadata(tags.album, tags.artist, tags.title)
+                logger.debug('Icy Metadata: %s', imd)
+                self.wfile.write(imd)
             block = mp3.read(downloadBlockSize)
             if songSize > 0 and writtenBytes > cachePrefillSize and songSize - writtenBytes < maxCacheSize:
                 break
@@ -345,75 +339,59 @@ class GetHandler(BaseHTTPRequestHandler):
         return self.server.all_songs_cache.lookup_song(id)
 
     def get_all_stations(self, params):
-        return self._get_all_lambda(params, api.get_all_stations, 'station')
+        return self._get_all_lambda(params, api.get_all_stations, 'station', to_id_or_nid_track)
 
     def get_all_playlists(self, params):
-        return self._get_all_lambda(params, api.get_all_playlists, 'playlist')
+        return self._get_all_lambda(params, api.get_all_playlists, 'playlist', to_id_or_share_token)
 
-    def _get_all_lambda(self, params, gmusic_func, api_call):
-        is_text = params.get('format', ['m3u'])[0].lower().strip() == 'text'
-        separator = params.get('separator', ['|'])[0]
-        onlyUrl = params.get('only_url', ['no'])[0].lower().strip()
-        self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.%s' % 'txt' if is_text else 'm3u')
-        logger.info('Getting all {0}s as {1} list...'.format(api_call, ('plain-text' if is_text else 'M3U')))
+    def _get_all_lambda(self, params, gmusic_func, api_call='song', tuple_function=None):
+        logger.debug('params: %s', params)
         results = self._robust_retry(gmusic_func)
         logger.debug(pprint.pformat(results))
-        if not is_text:
-            self.wfile.write(b'#EXTM3U\n')
-        logger.debug('generated playlist:%s', ('' if is_text else '\n#EXTM3U'))
-        for result in results:
-            if 'id' in result:
-                use_token = 'shareToken' if result.get('type', '') == 'SHARED' else 'id'
-                if is_text:
-                    line = '%shttp://%s/get_%s?id=%s' % ('%s%s' % (result['name'], separator) if (
-                        'name' in result and onlyUrl != 'yes') else '',
-                        self.server.host_and_port, api_call, result[use_token])
-                else:
-                    line = '#EXTINF:-1,%s\nhttp://%s/get_%s?id=%s' % (
-                        result.get('name', ''), self.server.host_and_port, api_call, result[use_token])
-                self.wfile.write(('%s\n' % line).encode('utf-8'))
-                logger.debug('%s', line)
+        writer = gmputils.build_writer(server.host_and_port, api_call, params)
+        if tuple_function is None:
+            tuple_function = to_nid_track
+        track_tuples = map(tuple_function, results)
+        filtered = filter(lambda tid: tid[0] is not None, track_tuples)
+        mime, file_extension, plist = writer.generate(filtered)
+        logger.debug("gerated playlist:\n%s", plist)
+        logger.debug('Getting all %ss as %s', api_call, mime)
+        self._send_headers(200, mime, 'inline; filename=playlist.%s' % file_extension)
+        self.wfile.write(plist.encode('utf-8'))
         return True
 
     def get_station(self, params):
         station_id = params.get('id', None)
         if station_id is None:
             return False
-        numTracks = params.get('num_tracks',[defaultNumberTracksStation])[0]
-        station = self._robust_retry(lambda: api.get_station_tracks(
-            station_id=station_id, num_tracks=numTracks))
-        logger.info('Getting %s tracks from station with id \'%s\'', numTracks, station_id)
-        self._write_songs_m3u(station)
-        return True
+        numTracks = params.get('num_tracks', [defaultNumberTracksStation])[0]
 
-    def _get_new_station(self, id, type, numTracks, transient, name):
+        return self._get_all_lambda(params, lambda: api.get_station_tracks(
+            station_id=station_id, num_tracks=numTracks))
+
+    def _delete_transient(self, station_id, lock):
+        transientStationIds.append(station_id)
+        with lock:
+            self._robust_retry(lambda: api.delete_stations(station_id))
+            transientStationIds.remove(station_id)
+
+    def _get_new_station(self, params):
+        id = params['id'][0]
+        type = params['type'][0].lower().strip()
+        numTracks = params.get('num_tracks', [defaultNumberTracksStation])[0]
+        transient = params.get('transient', ['yes'])[0].lower().strip() == 'yes'
+        name = params.get('name', [transientStationName])[0]
         stationId = api.create_station(name=name, track_id=id if type == 'song' else None, artist_id=id if type ==
                                        'artist' else None, album_id=id if type == 'album' else None)  # by genre: TO DO
-        if transient != 'no':
-            transientStationIds.append(stationId)
-        station = self._robust_retry(lambda: api.get_station_tracks(
-            station_id=stationId, num_tracks=numTracks))
-        if transient != 'no':
-            self._robust_retry(lambda: api.delete_stations(stationId))
-            transientStationIds.remove(stationId)
+        lock = threading.Lock()
+        with lock:
+            if transient:
+                t = threading.Thread(target=self._delete_transient, args=(stationId, lock,), daemon=True)
+                t.start()
+            station = api.get_station_tracks(station_id=stationId, num_tracks=numTracks)
         logger.info('Getting %s tracks from a new %s station based on %s id \'%s\'' % (
-            numTracks, 'transient' if transient != 'no' else 'persistent', type, id))
-        self._write_songs_m3u(station)
-
-    def _write_songs_m3u(self, tracks, tuple_function=None):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(pprint.pformat(tracks))
-        if tuple_function is None:
-            tuple_function = to_nid_track
-        m3u = ['#EXTM3U']
-        track_tuples = map(tuple_function, tracks)
-        filtered = filter(lambda tid: tid is not None, track_tuples)
-        for track in filtered:
-            m3u.append(format_extinf_song(track[0], track[1]))
-        playlist = '\n'.join(m3u)
-        self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.m3u')
-        self.wfile.write(playlist.encode('utf-8'))
-        logger.debug('generated playlist\n%s', playlist)
+            numTracks, 'transient' if transient else 'persistent', type, id))
+        return station
 
     def get_playlist(self, params):
         playlist_id = params.get('id', None)
@@ -436,76 +414,48 @@ class GetHandler(BaseHTTPRequestHandler):
                 logger.debug(pprint.pformat(playlistsWithContents))
 
             for playlist in playlistsWithContents:
-                if 'id' in playlist and playlist['id'] == playlist_id:
+                if playlist.get('id', '') == playlist_id:
                     target_playlist = playlist['tracks']
 
-        if target_playlist is not None:
-            if shuffle:
-                logger.info('Shuffling the playlist')
-                random.shuffle(target_playlist)
-            full_playlist = []
-            for track in target_playlist:
-                if 'trackId' in track:
-                    foundTrack = None
-                    if 'track' in track:
-                        foundTrack = track['track']
-                    else:
-                        foundTrack = self.server.all_songs_cache.lookup_song(track['trackId'])
-                    if foundTrack:
-                        full_playlist.append((track, foundTrack))
-                    else:
-                        logger.warning(
-                            "no information available in collection of track with id '%s'!", track['trackId'])
-            self._write_songs_m3u(full_playlist, playlist_tuple_to_track)
-            return True
-        else:
+        if target_playlist is None:
             logger.warning("Playlist not found!")
             return False
 
-    def _get_album(self, id):
-        album = self._robust_retry(lambda: api.get_album_info(
-            album_id=id, include_tracks=True))
-        logger.info('Getting the tracks of the album with id \'%s\': %s - %s',
-                    id, album['name'], album['artist'])
-        self._write_songs_m3u(album.get('tracks', {}))
+        if shuffle:
+            logger.info('Shuffling the playlist')
+            random.shuffle(target_playlist)
+        full_playlist = []
+        for track in target_playlist:
+            if 'trackId' in track:
+                foundTrack = track.get('track', self.server.all_songs_cache.lookup_song(track['trackId']))
+                if foundTrack:
+                    full_playlist.append((track, foundTrack))
+                else:
+                    logger.warning(
+                        "no information available in collection of track with id '%s'!", track['trackId'])
+        return self._get_all_lambda(params, lambda: full_playlist, tuple_function=playlist_tuple_to_track)
 
-    def _get_top_tracks_artist(self, id, numTracks):
-        artist = self._robust_retry(lambda: api.get_artist_info(
-            artist_id=id, include_albums=False, max_top_tracks=numTracks, max_rel_artist=0))
-        logger.info('Getting %s top tracks of the artist with id \'%s\': %s',
-                    numTracks, id, artist['name'])
-        self._write_songs_m3u(artist.get('topTracks', {}))
+    def _get_album(self, id, params):
+        gfunc = lambda: api.get_album_info(
+            album_id=id, include_tracks=True).get('tracks', {})
 
-    def get_discography_artist(self, id, format, params):
-        id = params.get('id', [None])[0]
-        if id is None:
+        return self._get_all_lambda(params, gfunc)
+
+    def _get_top_tracks_artist(self, params):
+        id = params['id'][0]
+        numTracks = params.get('num_tracks', [defaultNumberTopTracks])[0]
+        artist = api.get_artist_info(artist_id=id, include_albums=False,
+                            max_top_tracks=numTracks, max_rel_artist=0)
+        logger.info("Getting %s top tracks of the artist with id '%s': %s", numTracks, id, artist['name'])
+        return artist.get('topTracks', {})
+
+    def get_discography_artist(self, params):
+        artist_id = params.get('id', [None])[0]
+        logger.debug('get_discography_artist: %s', artist_id)
+        if artist_id is None:
             return False
-        output_format = params.get('format', ['m3u'])[0].lower().strip()
-        separator = params.get('separator', ['|'])[0]
-        onlyUrl = params.get('only_url', ['no'])[0]
-        self._send_headers(200, 'audio/mpegurl', 'inline; filename=playlist.%s' % 'txt' if (output_format == 'text') else 'm3u')
-        artist = self._robust_retry(lambda: api.get_artist_info(
-            artist_id=id, include_albums=True, max_top_tracks=0, max_rel_artist=0))
-        logger.info('Getting all albums of the artist with id \'%s\' (%s) as a %s list...', id, artist[
-                    'name'], 'plain-text' if format == 'text' else 'M3U')
-        logger.debug(pprint.pformat(artist))
-        if output_format != 'text':
-            self.wfile.write(b'#EXTM3U\n')
-        logger.debug('generated list:' if format.lower().strip()
-                     == 'text' else 'generated list:\n#EXTM3U')
-        if 'albums' in artist:
-            for album in artist['albums']:
-                if 'albumId' in album:
-                    if output_format == 'text':
-                        line = '%shttp://%s:%s/get_album?id=%s' % ('%s%s%s%s' % (album['name'], separator, album['year'], separator) if (
-                            'name' in album and 'year' in album and onlyUrl.lower().strip() != 'yes') else '', config['host'], config['port'], album['albumId'])
-                    else:
-                        line = '#EXTINF:-1,%s [%s]\nhttp://%s:%s/get_album?id=%s' % (album.get('name', ''),
-                                                                                     album.get('year', ''),
-                                                                                     config['host'], config['port'], album['albumId'])
-                    self.wfile.write(('%s\n' % line).encode('utf-8'))
-                    logger.debug(line)
-        return True
+        return self._get_all_lambda(params, (lambda: api.get_artist_info(
+            artist_id=artist_id, include_albums=True, max_top_tracks=0, max_rel_artist=0).get('albums', {})), 'album', to_albumid_track)
 
     def get_collection(self, params):
         ratingthreshold = params.get('rating', [0])[0]
@@ -518,18 +468,16 @@ class GetHandler(BaseHTTPRequestHandler):
         if ratingthreshold > 0:
             logger.info('Filtering out songs with rating lower than %s', ratingthreshold)
             for song in songs:
-                songrating = song.get('rating')
-                if songrating is not None:
-                    if int(songrating) < ratingthreshold:
-                        songs.remove(song)
+                songrating = song.get('rating', ratingthreshold)
+                if int(songrating) < ratingthreshold:
+                    songs.remove(song)
 
         if shuffle:
             logger.info('Shuffling the collection')
             random.shuffle(songs)
 
         logger.info('Getting your collection: %s tracks', len(songs))
-        self._write_songs_m3u(songs, to_id_or_nid_track)
-        return True
+        return self._get_all_lambda(params, lambda: songs, tuple_function=to_id_or_nid_track)
 
     def _search(self, type, query_title, query_artist, exact, max_results=None):
         if type is None or type not in ['artist', 'song', 'album', 'matches']:
@@ -669,6 +617,11 @@ def matches_album_artist(result, artist, title):
            result['album'].get('artist', '').lower().strip() == artist
 
 
+def to_id_or_share_token(track):
+    id_or_st = 'shareToken' if track.get('type', '') == 'SHARED' else 'id'
+    return track[id_or_st], track
+
+
 def to_nid_track(track):
     return track.get('nid'), track
 
@@ -688,9 +641,8 @@ def playlist_tuple_to_track(p_tuple):
     return track['trackId'], p_tuple[1]
 
 
-def format_extinf_song(id_value, track):
-    return '#EXTINF:%s,%s%s%s\nhttp://%s/get_song?id=%s' % ((int(track.get('durationMillis', '-1000')) / 1000), '%s - ' % track['artist'] if 'artist' in track else '',
-                                                                track.get('title', ''), ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', server.host_and_port, id_value)
+def to_albumid_track(album):
+    return album.get('albumId'), album
 
 
 def config_handlers(http_server):
@@ -781,14 +733,14 @@ def getOptions(filename):
     gmp_config = ConfigParser()
     args = parser.parse_args()
     fp = StringIO('[dummy]\n')
-    gmp_config.readfp(fp)
+    gmp_config.read_file(fp)
     if args.config:
         fp = StringIO('[dummy]\n' + args.config.read())
-        gmp_config.readfp(fp)
+        gmp_config.read_file(fp)
     else:
         for path in reversed(list(xdg.BaseDirectory.load_config_paths(filename))):
             fp = StringIO('[dummy]\n' + open(path, 'r').read())
-            gmp_config.readfp(fp)
+            gmp_config.read_file(fp)
     config_values = dict(gmp_config.items('dummy'))
 
     # adjust some names in order to make work configparser with argparse
@@ -867,7 +819,7 @@ def checkLatestVersion():
             logger.warning('There is a new %s release of %s. Consider the idea to update your '
                            'installation in order to keep it working!\n', latest_version, programName)
     except requests.exceptions.HTTPError as http_err:
-        logger.warn(f'Error in fetching version information {http_err}')
+        logger.warn('Error in fetching version information %s', http_err)
     except ValueError:
         logger.debug('Error on malformed version data (\'%s\', \'%s\')',
                      latest_version, programVersion)
@@ -921,7 +873,7 @@ if __name__ == '__main__':
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
-    programVersion = '2.0.0'
+    programVersion = '2.1.0'
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []
@@ -1012,7 +964,7 @@ if __name__ == '__main__':
         (config['bind_address'], config['port']), GetHandler)
 
     server.lock = threading.Lock()
-    server.all_songs_cache = GMSongsCache.GMSongsCache(logger)
+    server.all_songs_cache = gmputils.GMSongsCache(logger)
     server.host_and_port = '%s:%s' % (config['host'], config['port'])
     server.json_version = json.dumps({"version": programVersion})
     config_handlers(server)

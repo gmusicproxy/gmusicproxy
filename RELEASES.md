@@ -1,0 +1,95 @@
+# GMusicProxy Release Notes
+
+- 2.1.0 (2020-04-24)
+  - Fairly significant refactor of playlist generation to better encapsulate generation logic and allow for additional formats as needed
+  - Added XSPF (xml), json, m3u, and text outputs for most meta calls
+  - corrected get_new_station_by_search issue
+  - Updated Docker Container to reflect Python 3.8
+  - Further decomposed GMusicProxy functions to gmusicproxyutils
+- 2.0.1 (2020-04-16)
+  - corrected version check to pull from github
+  - get_all_playlists no longer hangs
+- 2.0.0 (2020-04-15)
+  - Added JSON end points to return data for experimental Volumio Plugin
+  - 500 requests return README.md as HTML
+  - Dropped Python 2 support
+  - Updated Docker image with Python 3.7
+  - Updated gmusicapi to version 13.0.0
+  - Code clean up
+- 1.0.9-beta (unreleased):
+  - experimental Python 3 support: soon the support for 2.7 version will be removed (thanks to Pierre Karashchuk)
+  - fix issues with missing recording year and with `__get_matches` function
+  - less strict version requirement for gmusicapi (easy life for packaging managers)
+- 1.0.8 (2017-02-07):
+  - daemon-mode is not supported under Windows (but it could be under cygwin...): this allows to run gmusicproxy without the `daemon` module
+  - support for on-the-fly shuffling of playlists and collections
+  - support for public/shared playlists
+  - support filtering collection returned from get_collection by minimum rating (thanks to Mark Gillespie)
+  - cache the end of song in RAM in order to prevent some connection timeout errors (thanks to Alex Busenius)
+  - possible fix for the long standing bug on the truncated download of some songs
+  - support for recording year in IDv3 tag (thanks to redlulz)
+  - fix for deadlock in cache management and in ids handling
+- 1.0.7 (2017-01-09):
+  - possibility to bind to a specific network interface (thanks to fgtham)
+  - bug fixes (shoutcast metadata)
+  - early release to fix the lack of requirement for gmusicapi 10.1.0 in the setup
+- 1.0.6 (2016-12-03):
+  - support for concurrent requests (thanks to Pierre Karashchuk)
+  - support for HEAD requests
+  - better shoutcast headers handling
+  - documentation improvements
+  - a more robust re-authentication system (thanks to Alex Busenius)
+  - new keyring support for desktop computers (thanks to Alex Busenius)
+  - supported recent gmusicapi v.10.1.0 (fixed bugs and packaging problems)
+  - bug fixes (shoutcast metadata support, content-disposition header, ...)
+- 1.0.5 (2016-05-04):
+  - send to the client the effective song size: this should allow the player (VLC) to properly show the progress of the playback
+  - make HTTP connection for version control more robust: not fatal on error (my HTTP server is down: sorry!)
+  - new support to the Shoutcast metadata protocol: at the moment alternative to the IDv3 tag supporto, so disabled by default (thanks to Adam Prato)
+- 1.0.4 (2016-02-27):
+  - implemented a RAM-based cache for songs list: it speeds-up streaming of songs in collection or if AA is disabled
+  - implemented the automatic increment of the playcounts of the fetched songs; the previous behavior can be restored with option `disable-playcount-increment`
+- 1.0.3 (2015-12-07):
+  - added `Access-Control-Allow-Origin: *` header to allow web-pages to interact with GMusicProxy API
+  - bump `gmusicapi` requirement to 7.0.0 to fix validation errors
+  - fix in documentation
+  - fix/workaround to use python-daemon>=2.1
+- 1.0.2 (2015-07-16):
+  - added possibility to get the full discography of a specified artist using `get_discography_artist` (thanks to e-matterson for the idea and an attempted implementation)
+- 1.0.1 (2015-06-21):
+  - switched on gmusicapi 6.0.0
+  - the use of a registered device ID is no longer stricly necessary but it is still suggested
+- 1.0.0 (2015-06-12):
+  - finally fixed the support of uploaded tracks: now GMusicProxy can really work without a paid subscription!
+  - code cleanup
+  - some bugs squashing
+  - now it is possible to support the project with a small [donation][8]
+- 0.9.9.2 (2015-06-04):
+  - fixed breakage on login due to gmusicapi change (thanks for the pull request to @Mlmlte)
+  - reverted on gmusicapi 5.0.0: it was released!
+  - restored `--list-devices` functionality moving on new mobileclient `get_registered_devices` function of gmusicapi
+- 0.9.9 (2015-05-27):
+  - fixed login problem using the devel branch (5.0.0-dev0) of gmusicapi (today not yet released)
+  - changed the installation instructions using pip `requirements.txt` file: this permits the automatic deploy of gmusicapi from github
+  - the functionality `--list-devices` is actually broken: keep a copy of you device ids!
+- 0.9.8 (2014-09-14):
+  - new option `extended-m3u`: it optionally extends `#EXTINF:` lines of the produced M3U lists to a non-standard format like `artist - song title - album title`
+- 0.9.7 (2014-08-25):
+  - merged a contribution by Nick Depinet to report all the possible matches of a search (support required by project CSH DJ)
+- 0.9.6 (2014-08-08):
+  - added support for returning multiple songs in the search results using type `songs` for `get_by_search`
+- 0.9.5 (2014-03-23):
+  - added support for the dynamic 'I'm feeling lucky' station: `get_ifl_station`
+- 0.9.4 (2014-02-02):
+  - added support for 'album artist' tag (requires a development version >= 0.7.5-beta of eyed3 lib)
+  - added control on startup for new versions
+- 0.9.2 (2013-10-30):
+  - added the possibility to rate songs (like/dislike)
+- 0.9.1 (2013-10-05):
+  - a new and more robust message/log system
+  - possibility to daemonize the proxy
+- 0.8 (2013-09-22):
+  - rewrote command-line/config system
+  - possibility to disable AA features for a free GM account
+  - improved documentation
+- 0.6 (2013-09-15): first public version
