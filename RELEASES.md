@@ -1,5 +1,8 @@
 # GMusicProxy Release Notes
 
+- 2.1.1 (2020-04-26)
+  - Merged PR to address album search error
+  - Added documentation for Official Docker Build
 - 2.1.0 (2020-04-24)
   - Fairly significant refactor of playlist generation to better encapsulate generation logic and allow for additional formats as needed
   - Added XSPF (xml), json, m3u, and text outputs for most meta calls

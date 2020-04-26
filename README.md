@@ -11,7 +11,7 @@ contributors:
 - [Pierre Karashchuk](mailto:krchtchk@gmail.com)
 - [Alex Busenius](mailto:)
 - [Mark Gillespie](mailto:mark.gillespie@gmail.com)
-- Justin Woody
+- [Justin Woody](mailto:gmusicproxy@gmail.com)
 
 License: **GPL v3**
 
@@ -278,6 +278,8 @@ E.g. for KWallet, you can list available service names and entries as follows:
 
 ### [Docker][6]
 
+- Official Docker builds are available on [Docker Hub][8]
+
 - To build and run the Docker container, follow these steps
 
   ```bash
@@ -294,3 +296,4 @@ E.g. for KWallet, you can list available service names and entries as follows:
 [5]: https://github.com/gmusicproxy/gmusicproxy/pulls
 [6]: https://docker.com/
 [7]: http://www.xspf.org/
+[8]: https://hub.docker.com/r/gmusicproxy/gmusicproxy
