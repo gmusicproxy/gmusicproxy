@@ -139,7 +139,7 @@ class GetHandler(BaseHTTPRequestHandler):
             elif p_type == 'song':
                 self._get_song(result)
             elif p_type == 'album':
-                self._get_album(result)
+                self._get_album(id=result, params=params)
             elif p_type == 'matches':
                 self._get_all_lambda(params, lambda: result, tuple_function=match_to_track)
         return True
