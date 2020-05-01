@@ -1,4 +1,4 @@
-# [GMusicProxy][1] - Google Play Music Proxy 
+# [GMusicProxy][0] - Google Play Music Proxy 
 
 *"Let's stream Google Play Music using any media-player"*
 
