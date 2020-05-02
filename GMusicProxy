@@ -573,7 +573,10 @@ class GetHandler(BaseHTTPRequestHandler):
                 logger.warning(
                     'Server denied authorization, trying to reconnect...')
                 api.logout()
-                api.login(config['email'], config['password'], config['device_id'])
+                if config['email'] is not None or config['password'] is not None:
+                    api.login(config['email'], config['password'], config['device_id'])
+                else:
+                    api.oauth_login(config['device_id'])
                 if api.is_authenticated():
                     self.handle_one_request()
                 else:
@@ -693,9 +696,9 @@ def getOptions(filename):
     parser.add_argument('-c', '--config', type=open,
                         help='specific configuration file to use')
     parser.add_argument(
-        '-e', '--email', help='email address of the Google account [required]')
+        '-e', '--email', help='[DEPRECATED] email address of the Google account')
     parser.add_argument(
-        '-p', '--password', help='password of the Google account (or an application-specific one if two-factor authentication is enabled) [required]')
+        '-p', '--password', help='[DEPRECATED] password of the Google account (or an application-specific one if two-factor authentication is enabled)')
     parser.add_argument(
         '-d', '--device-id', help='the ID of a registered Android/iOS device [default: fake-id based on mac address of network card]')
     parser.add_argument(
@@ -722,13 +725,13 @@ def getOptions(filename):
     parser.add_argument('-C', '--disable-playcount-increment', default=False, action='store_true',
                         help='disable the automatic increment of playcounts upon song fetch')
     parser.add_argument(
-        '--keyring-backend', help='name of the keyring backend to use instead of the default one')
+        '--keyring-backend', help='[DEPRECATED] name of the keyring backend to use instead of the default one')
     parser.add_argument('--list-keyring-backends', default=False,
-                        action='store_true', help='list the available keyring backends')
+                        action='store_true', help='[DEPRECATED] list the available keyring backends')
     parser.add_argument(
-        '--keyring-service', help='keyring service to use, takes precedence over --password if set')
+        '--keyring-service', help='[DEPRECATED] keyring service to use, takes precedence over --password if set')
     parser.add_argument(
-        '--keyring-entry', help='keyring entry to use, required if --keyring-service is used')
+        '--keyring-entry', help='[DEPRECATED] keyring entry to use, required if --keyring-service is used')
 
     gmp_config = ConfigParser()
     args = parser.parse_args()
@@ -781,17 +784,25 @@ def listDevices():
         sys.exit()
 
 
-def loginGM(email, password, device_id=gmusicapi.Mobileclient.FROM_MAC_ADDRESS):
+def loginGM(device_id=gmusicapi.Mobileclient.FROM_MAC_ADDRESS, email=None, password=None):
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     api = gmusicapi.Mobileclient(debug_logging=config['debug'])
     if config['debug']:
         api.logger = logger
-    api.login(email, password, device_id)
-    if not api.is_authenticated():
-        logger.error('Sorry, those credentials weren\'t accepted.')
-        logger.error('Does your account have Two Factor Authentication (2FA) enabled?')
-        logger.error('If so, you must create and use an App Password in your account settings')
-        sys.exit(1)
+    if email is not None or password is not None:
+        api.login(email, password, device_id)
+        if not api.is_authenticated():
+            logger.error('Sorry, credentials weren\'t accepted.')
+            logger.error('Does your account have Two Factor Authentication (2FA) enabled?')
+            logger.error('If so, you must create and use an App Password in your account settings')
+            logger.error('Please consider switching to OAuth2 credentials.')
+            sys.exit(1)
+    else:
+        if not api.oauth_login(device_id):
+            api.perform_oauth(open_browser=True)
+            if not api.oauth_login(device_id):
+                logger.error('Failed to login with OAuth2 credentials.')
+                sys.exit(1)
     return api
 
 def autodetectLocalIP():
@@ -929,13 +940,12 @@ if __name__ == '__main__':
     if config['keyring_service'] is not None or config['keyring_entry'] is not None:
         config['password'] = getKeyringPassword()
 
-    if config['email'] is None or config['password'] is None or len(config['email']) == 0 or len(config['password']) == 0:
-        logger.error(
-            'Please, specify the credentials of your Google account in the config file or on the command-line.')
-        sys.exit(1)
+    if config['email'] is not None or config['password'] is not None:
+        logger.warning('Email and password based login is deprecated. Please switch to OAuth2. See README for more details.')
 
-    api = loginGM(config['email'], config['password'], gmusicapi.Mobileclient.FROM_MAC_ADDRESS if config[
-                  'device_id'] == '**auto**' else config['device_id'])
+    api = loginGM(gmusicapi.Mobileclient.FROM_MAC_ADDRESS if config[
+                  'device_id'] == '**auto**' else config['device_id'],
+                  email=config['email'], password=config['password'])
 
     with open("README.md", "r") as read_me:
         gmp_md = ''.join(read_me.readlines())

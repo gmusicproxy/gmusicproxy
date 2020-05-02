@@ -189,15 +189,17 @@ python GMusicProxy
 ## Usage
 With the service running on a computer on the LAN, it can be used by any others of the same network.
 
-To launch the proxy you need the credentials of your Google account: *email* and *password*. If you are using the 2-factor authentication, you have to create an application-specific password to be used with this program. Another usefull information would be the device ID of an Android/iOS device registered in your account: you can discover it using the option `--list-devices` on the command-line. As default a fake-id, based on the mac address of the main network card of the server running the service, is used.
+To use the proxy, you first need to login via OAuth2. If you haven't authorized gmusicapi yet (or the credentials were revoked or deleted), when you first launch GMusicProxy, your browser will open letting you login and authorize gmusicapi. If no browser is available, the URL printed out can be used to login. After this, OAuth2 credentials (not your *email* and *password*) are cached to disk so future uses don't require you to login again.
+
+Another useful information would be the device ID of an Android/iOS device registered in your account: you can discover it using the option `--list-devices` on the command-line. As default a fake-id, based on the mac address of the main network card of the server running the service, is used.
 
 You can provide such necessary information, as well as other options, on the command-line of the program or using a configuration file.
 
 ### Command-line
 Here a list of the supported options on the command-line:
 
-- `--email`: email address of the Google account [required]
-- `--password`: password of the Google account [required]
+- `--email`: [DEPRECATED] email address of the Google account
+- `--password`: [DEPRECATED] password of the Google account
 - `--device-id`: the ID of a registered Android/iOS device [default: fake-id based on mac address of network card]
 - `--host`: host in the generated URLs [default: autodetected local ip address]
 - `--bind-address`: ip address to bind to [default: 0.0.0.0=all]
@@ -212,10 +214,10 @@ Here a list of the supported options on the command-line:
 - `--extended-m3u`: enable non-standard extended m3u headers
 - `--shoutcast-metadata`: enable Shoutcast metadata protocol support (disabling IDv3 tags)
 - `--disable-playcount-increment`: disable the automatic increment of playcounts upon song fetch
-- `--keyring-backend`: name of the keyring backend to use instead of the default one
-- `--list-keyring-backends`: list the available keyring backends
-- `--keyring-service`: keyring service to use, takes precedence over `--password` if set
-- `--keyring-entry`: keyring entry to use, required if `--keyring-service` is used
+- `--keyring-backend`: [DEPRECATED] name of the keyring backend to use instead of the default one
+- `--list-keyring-backends`: [DEPRECATED] list the available keyring backends
+- `--keyring-service`: [DEPRECATED] keyring service to use, takes precedence over `--password` if set
+- `--keyring-entry`: [DEPRECATED] keyring entry to use, required if `--keyring-service` is used
 
 ### Config file
 All the command-line options can be specified in a configuration file. An example of configuration with the strictly required options could look like this:
