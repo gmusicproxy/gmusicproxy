@@ -1,5 +1,6 @@
 import logging
 import json
+import urllib.parse as uparse
 from datetime import datetime, timezone
 from xml.sax.saxutils import escape
 
@@ -58,17 +59,38 @@ class GMSongsCache:
     def get_last_update(self):
         return self.last_update
 
-class GMPWriter:
-    BASE_URL = "http://%s/get_%s?id="
 
-
-class TextWriter(GMPWriter):
+class PlaylistMeta:
+    BASE_URL = "http://%s/get_%s"
 
     def __init__(self, host_and_port, api_call, params):
         self.base_url = self.BASE_URL % (host_and_port, api_call)
-        self.separator = params.get('separator', ['|'])[0]
-        self.only_url = params.get('only_url', ['no'])[0].lower().strip() == 'yes'
         self.api_call = api_call
+        self.params = params
+        self.host_and_port = host_and_port
+        self.format = params.get('format', ['m3u'])[0].lower().strip()
+        if self.format == 'text':
+            self.format = 'txt'
+        self.base_params = {} if api_call == 'song' else {"format":self.format}
+
+    def get_file_name(self):
+        print(self.params[REQ_URIINFO])
+        return self.params[REQ_URIINFO].path.replace('/', '') + "." + self.format
+
+    def get_gmp_url(self, g_id, record):
+        qs_params = record.get("qstring", {})
+        qs_params["id"] = g_id
+        qs_params.update(self.base_params)
+        q_string = uparse.urlencode(qs_params)
+        return f'{self.base_url}?{q_string}'
+
+
+class TextWriter:
+
+    def __init__(self, p_meta):
+        self.p_meta = p_meta
+        self.separator = p_meta.params.get('separator', ['|'])[0]
+        self.only_url = p_meta.params.get('only_url', ['no'])[0].lower().strip() == 'yes'
         self.key_format_lookup = {
             'album':   TextWriter._album_formatter,
             'default': TextWriter._default_formatter
@@ -76,13 +98,12 @@ class TextWriter(GMPWriter):
 
     def generate(self, results):
         playlist = []
-        kf_pair = self.key_format_lookup.get(self.api_call, self.key_format_lookup['default'])
+        kf_pair = self.key_format_lookup.get(self.p_meta.api_call, self.key_format_lookup['default'])
         formatter = kf_pair if not self.only_url else TextWriter._empty_formatter
-        q_string = '&format=txt' if self.api_call != 'song' else ''
         for r_id, result in results:
-            playlist.append('%s%s%s%s' % (formatter(self, result), self.base_url, r_id, q_string))
+            playlist.append('%s%s' % (formatter(self, result), self.p_meta.get_gmp_url(r_id, result)))
         rendered = '\n'.join(playlist)
-        return TXT_MIME, 'txt', rendered
+        return TXT_MIME, self.p_meta.get_file_name(), rendered
 
     def _album_formatter(self, album):
         album_format = '%s%s%s%s' % (album['name'], self.separator, album['year'], self.separator) if (
@@ -97,13 +118,11 @@ class TextWriter(GMPWriter):
         return record_format
 
 
-class M3UWriter(GMPWriter):
+class M3UWriter:
 
-    def __init__(self, host_and_port, api_call, params):
-        self.host_and_port = host_and_port
-        self.api_call = api_call
-        self.base_url = self.BASE_URL % (host_and_port, api_call)
-        self.is_extended_m3u = params.get('extended_m3u', False)
+    def __init__(self, p_meta):
+        self.p_meta = p_meta
+        self.is_extended_m3u = p_meta.params.get('extended_m3u', False)
         self.key_format_lookup = {
             'album':   M3UWriter._album_formatter,
             'song':    M3UWriter._song_formatter,
@@ -111,16 +130,16 @@ class M3UWriter(GMPWriter):
         }
 
     def generate(self, results):
-        formatter = self.key_format_lookup.get(self.api_call, self.key_format_lookup.get('default'))
+        formatter = self.key_format_lookup.get(self.p_meta.api_call, self.key_format_lookup.get('default'))
         playlist = ['#EXTM3U']
         for r_id, result in results:
             playlist.append(formatter(self, result))
-            playlist.append('%s%s' % (self.base_url, r_id))
+            playlist.append(self.p_meta.get_gmp_url(r_id, result))
         rendered = '\n'.join(playlist)
-        return M3U_MIME, 'm3u', rendered
+        return M3U_MIME, self.p_meta.get_file_name(), rendered
 
     def _default_formatter(self, result):
-        return '#EXTINF:-1,%s' % (result.get('name', ''))
+        return '#EXTINF:-1,%s' % (result.get("title", result.get('name', '')))
 
     def _album_formatter(self, album):
         return '#EXTINF:-1,%s [%s]' % (album.get('name', ''), album.get('year', ''))
@@ -131,22 +150,22 @@ class M3UWriter(GMPWriter):
         track.get('title', ''), ' - %s' % track['album'] if self.is_extended_m3u and 'album' in track else '')
 
 
-class SPFWriter(GMPWriter):
+class SPFWriter:
 
-    def __init__(self, host_and_port, api_call, params):
-        self.base_url = self.BASE_URL % (host_and_port, api_call)
-        self.host_and_port = host_and_port
-        self.api_call = api_call
-        self.params = params
-        self.is_json = params.get('format', ['json'])[0] == 'json'
-        self.f_ext = 'json' if self.is_json else 'xml'
+    def __init__(self, p_meta):
+        self.p_meta = p_meta
+        if p_meta.format == 'json':
+            self.mime_type = JSON_MIME
+            self.writer = spf_to_json
+        else:
+            self.mime_type = XSPF_MIME
+            self.writer = spf_to_xml
 
     def generate(self, results):
         tracks = []
-        q_string = '&format=' + self.f_ext if self.api_call != 'song' else ''
         for r_id, result in results:
             track = {
-                'location':   '%s%s%s' % (self.base_url, r_id, q_string),
+                'location':   self.p_meta.get_gmp_url(r_id, result),
                 'title':      result.get("title", result.get("name", "")),
                 'creator':    result.get("artist", ""),
                 'album':      result.get("album", ""),
@@ -156,15 +175,12 @@ class SPFWriter(GMPWriter):
                 'image':      result.get('albumArtRef', [{}])[0].get('url', None)
             }
             tracks.append(track)
-        uri_info = self.params[REQ_URIINFO]
+        uri_info = self.p_meta.params[REQ_URIINFO]
         playlist = SPFList(title="GMP Playlist",
                            creator="GMusicProxy",
-                           location='%s%s?%s' % (self.host_and_port, uri_info.path, uri_info.query),
+                           location='http://%s%s?%s' % (self.p_meta.host_and_port, uri_info.path, uri_info.query),
                            tracks=tracks)
-        if self.is_json:
-            return JSON_MIME, 'json', playlist.to_json()
-        else:
-            return XSPF_MIME, 'xspf', playlist.to_xml()
+        return self.mime_type, self.p_meta.get_file_name(), self.writer(playlist)
 
 
 def make_xml_tag(tag_name, tag_value):
@@ -175,62 +191,7 @@ def make_xml_tag(tag_name, tag_value):
 
 
 """
-Comprehensive example of JSPF
-{
-   "playlist" : {
-     "title"         : "JSPF example",
-     "creator"       : "Name of playlist author",
-     "annotation"    : "Super playlist",
-     "info"          : "http://example.com/",
-     "location"      : "http://example.com/",
-     "identifier"    : "http://example.com/",
-     "image"         : "http://example.com/",
-     "date"          : "2005-01-08T17:10:47-05:00",
-     "license"       : "http://example.com/",
-     "attribution"   : [
-       {"identifier"   : "http://example.com/"},
-       {"location"     : "http://example.com/"}
-     ],
-     "link"          : [
-       {"http://example.com/rel/1/" : "http://example.com/body/1/"},
-       {"http://example.com/rel/2/" : "http://example.com/body/2/"}
-     ],
-     "meta"          : [
-       {"http://example.com/rel/1/" : "my meta 14"},
-       {"http://example.com/rel/2/" : "345"}
-     ],
-     "extension"     : {
-       "http://example.com/app/1/" : [ARBITRARY_EXTENSION_BODY, ARBITRARY_EXTENSION_BODY],
-       "http://example.com/app/2/" : [ARBITRARY_EXTENSION_BODY]
-     },
-     "track"         : [
-       {
-         "location"      : ["http://example.com/1.ogg", "http://example.com/2.mp3"],
-         "identifier"    : ["http://example.com/1/", "http://example.com/2/"],
-         "title"         : "Track title",
-         "creator"       : "Artist name",
-         "annotation"    : "Some text",
-         "info"          : "http://example.com/",
-         "image"         : "http://example.com/",
-         "album"         : "Album name",
-         "trackNum"      : 1,
-         "duration"      : 0,
-         "link"          : [
-           {"http://example.com/rel/1/" : "http://example.com/body/1/"},
-           {"http://example.com/rel/2/" : "http://example.com/body/2/"}
-         ],
-         "meta"          : [
-           {"http://example.com/rel/1/" : "my meta 14"},
-           {"http://example.com/rel/2/" : "345"}
-         ],
-         "extension"     : {
-           "http://example.com/app/1/" : [ARBITRARY_EXTENSION_BODY, ARBITRARY_EXTENSION_BODY],
-           "http://example.com/app/2/" : [ARBITRARY_EXTENSION_BODY]
-         }
-       }
-     ]
-   }
- }
+ See: http://www.xspf.org/ for detailed spec info
 """
 class SPFList:
 
@@ -241,34 +202,35 @@ class SPFList:
         self.date = datetime.now(timezone.utc).astimezone().isoformat()
         self.track = tracks
 
-    def to_json(self):
-        return json.dumps({"playlist" : {
-            'title': self.title,
-            'creator': self.creator,
-            'location':self.location,
-            'date': self.date,
-            'track': self.track
-        }})
 
-    def to_xml(self):
-        xml_tracks = []
-        for d in self.track:
-            xml_track = ''.join(map(lambda x: make_xml_tag(x[0], x[1]), d.items()))
-            if len(xml_track) > 0:
-                xml_tracks.append('<track>%s</track>' % xml_track)
-        xml_tracks = '<trackList>%s</trackList>' % ''.join(xml_tracks) if len(xml_tracks) > 0 else '<trackList />'
-        return '<?xml version="1.0" encoding="UTF-8"?><playlist version="1" xmlns="http://xspf.org/ns/0/">' \
-               + '%s%s%s%s%s</playlist>' % (make_xml_tag("title", self.title), make_xml_tag("creator", self.creator),
-                                            make_xml_tag("location", self.location), make_xml_tag("date", self.date), xml_tracks)
+def spf_to_json(spf_list):
+    return json.dumps({"playlist": {
+        'title': spf_list.title,
+        'creator': spf_list.creator,
+        'location': spf_list.location,
+        'date': spf_list.date,
+        'track': spf_list.track
+    }})
+
+def spf_to_xml(spf_list):
+    xml_tracks = []
+    for d in spf_list.track:
+        xml_track = ''.join(map(lambda x: make_xml_tag(x[0], x[1]), d.items()))
+        if len(xml_track) > 0:
+            xml_tracks.append('<track>%s</track>' % xml_track)
+    xml_tracks = '<trackList>%s</trackList>' % ''.join(xml_tracks) if len(xml_tracks) > 0 else '<trackList />'
+    return '<?xml version="1.0" encoding="UTF-8"?><playlist version="1" xmlns="http://xspf.org/ns/0/">' \
+           + '%s%s%s%s%s</playlist>' % (make_xml_tag("title", spf_list.title), make_xml_tag("creator", spf_list.creator),
+                                        make_xml_tag("location", spf_list.location), make_xml_tag("date", spf_list.date), xml_tracks)
 
 
 def build_writer(host_and_port, api_call, params):
-    requested_fmt = params.get('format', ['m3u'])[0].lower().strip()
-    if requested_fmt == 'txt' or requested_fmt == 'text':
-        writer = TextWriter(host_and_port, api_call, params)
+    p_meta = PlaylistMeta(host_and_port, api_call, params)
+    requested_fmt = p_meta.format
+    if requested_fmt == 'txt':
+        writer = TextWriter(p_meta)
     elif requested_fmt == 'xml' or requested_fmt == 'json':
-        writer = SPFWriter(host_and_port, api_call, params)
+        writer = SPFWriter(p_meta)
     else:
-        writer = M3UWriter(host_and_port, api_call, params)
-
+        writer = M3UWriter(p_meta)
     return writer

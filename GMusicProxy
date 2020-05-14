@@ -72,7 +72,7 @@ except ImportError:
 # These requests require all access.
 ALL_ACCESS = ['/get_all_stations', '/get_station', '/get_ifl_station', '/get_album', '/get_top_tracks_artist',
               '/get_discography_artist', '/search_id', '/get_new_station_by_id', '/get_new_station_by_search']
-
+STATION_TYPES = ["song", "artist", "album", "curated"]
 
 class MultiThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
@@ -84,7 +84,7 @@ class GetHandler(BaseHTTPRequestHandler):
         self._process_request('GET', self.server.get_handlers)
 
     def handle_song(self, params):
-        send_icy_meta = 'icy-metadata' in self.headers or params('icy-metadata', False)
+        send_icy_meta = 'icy-metadata' in self.headers or params.get('icy-metadata', None)
         return 'id' in params and self._get_song(id=params['id'][0], send_icecast=send_icy_meta)
 
     def handle_song_info(self, params):
@@ -231,7 +231,7 @@ class GetHandler(BaseHTTPRequestHandler):
             songSize = 0
         else:
             logger.info('Streaming song with id \'%s\': %s - %s', id, info['artist'], info['title'])
-            logger.debug(pprint.pformat(info))
+            pp_debug(info)
             tags = eyed3.id3.Tag()
             tags.artist = info.get('artist', None)
             tags.album_artist = info.get('albumArtist', None)
@@ -332,8 +332,8 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def _get_from_cache(self, id):
         time_delta = datetime.datetime.now() - self.server.all_songs_cache.get_last_update()
-        # update once an hour at the most
-        if time_delta > datetime.timedelta(hours=1):
+        # update every 4 hours at the most
+        if time_delta > datetime.timedelta(hours=4):
             logger.debug('Refreshing songs cache')
             self._fetch_songs_list_cache()
         return self.server.all_songs_cache.lookup_song(id)
@@ -344,19 +344,88 @@ class GetHandler(BaseHTTPRequestHandler):
     def get_all_playlists(self, params):
         return self._get_all_lambda(params, api.get_all_playlists, 'playlist', to_id_or_share_token)
 
+    def handle_top_songs(self, params):
+        return self._get_all_lambda(params, lambda: self._get_top_songs(params), tuple_function=to_store_id_track)
+
+    def get_situations(self, params):
+        return self._get_all_lambda(params, self._get_situations, api_call='new_station_by_id')
+
+    def get_listen_now(self, params):
+        return self._get_all_lambda(params, lambda: self._get_listen_now(params), api_call='listen_now_list', tuple_function=to_metajam_track)
+
+    def get_listen_now_list(self, params):
+        ln_id = params.get("id", [None])[0]
+        if ln_id is None:
+            return False
+
+        elif ln_id.endswith(".station"):
+            params["id"] = [ln_id[:-8]]
+            return self.get_station(params)
+        else:
+            return self._get_album(ln_id, params)
+
+    def _get_top_songs(self, params):
+        songs = api.get_top_songs()
+
+        if len(songs) == 0:
+            logger.warning("No top tracks!?!")
+            return
+
+        shuffle_list(songs, params)
+        return songs
+
+    def _get_situations(self):
+        logger.info("Getting Listen Now situations")
+        situations = api.get_listen_now_situations()
+        pp_debug(situations)
+
+        for situation in situations:
+            if "id" in situation:
+                situation["qstring"] = {"name": situation["title"], "type": "curated"}
+                situation["title"] = "Listen Now - " + situation["title"]
+                situation["nid"] = situation["stations"][0]["seed"]["curatedStationId"]
+        return situations
+
+    def _get_listen_now(self, params):
+        logger.info("Getting Listen Now artists or albums")
+        items = api.get_listen_now_items()
+        type = params.get("type", ["artist"])[0]
+        listen_now_list = []
+        for item in items:
+            if type == "artist":
+                if "radio_station" in item:
+                    # artist is the display
+                    info = item["radio_station"]
+                    artist = info["title"]
+                    seed = info["id"]["seeds"][0]
+                    if "artistId" in seed:
+                        # stationId is what we need for the id param in the follow on call
+                        stationId = api.create_station(name=artist, artist_id=seed["artistId"], )
+                        info["metajamCompactKey"] = stationId + ".station"
+                        listen_now_list.append(info)
+
+            else:
+                if "album" in item:
+                    info = item["album"]["id"]
+                    # albumId is the next id param
+                    # our api is get_album
+                    # should be able to just return the info item
+                    # Listen Now is used as the prefix to the description
+                    listen_now_list.append(info)
+        return listen_now_list
+
     def _get_all_lambda(self, params, gmusic_func, api_call='song', tuple_function=None):
         logger.debug('params: %s', params)
         results = self._robust_retry(gmusic_func)
-        logger.debug(pprint.pformat(results))
+        pp_debug(results, '_get_all_lambda results:\n%s')
         writer = gmputils.build_writer(server.host_and_port, api_call, params)
         if tuple_function is None:
             tuple_function = to_nid_track
         track_tuples = map(tuple_function, results)
         filtered = filter(lambda tid: tid[0] is not None, track_tuples)
-        mime, file_extension, plist = writer.generate(filtered)
-        logger.debug("gerated playlist:\n%s", plist)
-        logger.debug('Getting all %ss as %s', api_call, mime)
-        self._send_headers(200, mime, 'inline; filename=playlist.%s' % file_extension)
+        mime, file_name, plist = writer.generate(filtered)
+        logger.debug("Generated playlist for %s as %s:\n%s", api_call, mime, plist)
+        self._send_headers(200, mime, 'inline; filename=%s' % file_name)
         self.wfile.write(plist.encode('utf-8'))
         return True
 
@@ -370,19 +439,24 @@ class GetHandler(BaseHTTPRequestHandler):
             station_id=station_id, num_tracks=numTracks))
 
     def _delete_transient(self, station_id, lock):
+        logger.debug("Transient delete started")
         transientStationIds.append(station_id)
         with lock:
             self._robust_retry(lambda: api.delete_stations(station_id))
             transientStationIds.remove(station_id)
+            logger.debug("Transient delete completed")
 
     def _get_new_station(self, params):
         id = params['id'][0]
         type = params['type'][0].lower().strip()
+        arg_idx = STATION_TYPES.index(type)
+        id_args = [None, None, None, None]
+        id_args[arg_idx] = id
         numTracks = params.get('num_tracks', [defaultNumberTracksStation])[0]
         transient = params.get('transient', ['yes'])[0].lower().strip() == 'yes'
         name = params.get('name', [transientStationName])[0]
-        stationId = api.create_station(name=name, track_id=id if type == 'song' else None, artist_id=id if type ==
-                                       'artist' else None, album_id=id if type == 'album' else None)  # by genre: TO DO
+        stationId = api.create_station(name=name, track_id=id_args[0], artist_id=id_args[1], album_id=id_args[2],
+                                       curated_station_id=id_args[3])  # by genre: TO DO
         lock = threading.Lock()
         with lock:
             if transient:
@@ -399,19 +473,17 @@ class GetHandler(BaseHTTPRequestHandler):
             return False
         playlist_id = playlist_id[0]
         logger.info('Getting tracks from playlist with id \'%s\'', playlist_id)
-        shuffle = params.get('shuffle', [''])[0] == 'yes'
 
         target_playlist = None
 
         if playlist_id[0] == 'A' and playlist_id[1] == 'M':
             target_playlist = self._robust_retry(lambda: api.get_shared_playlist_contents(playlist_id))
-            logger.debug(pprint.pformat(target_playlist))
+            pp_debug(target_playlist)
         else:
             # we have to download the content of all the playlists (actual API
             # limitation)
             playlistsWithContents = self._robust_retry(lambda: api.get_all_user_playlist_contents())
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(pprint.pformat(playlistsWithContents))
+            pp_debug(playlistsWithContents)
 
             for playlist in playlistsWithContents:
                 if playlist.get('id', '') == playlist_id:
@@ -421,9 +493,7 @@ class GetHandler(BaseHTTPRequestHandler):
             logger.warning("Playlist not found!")
             return False
 
-        if shuffle:
-            logger.info('Shuffling the playlist')
-            random.shuffle(target_playlist)
+        shuffle_list(target_playlist, params)
         full_playlist = []
         for track in target_playlist:
             if 'trackId' in track:
@@ -436,8 +506,8 @@ class GetHandler(BaseHTTPRequestHandler):
         return self._get_all_lambda(params, lambda: full_playlist, tuple_function=playlist_tuple_to_track)
 
     def _get_album(self, id, params):
-        gfunc = lambda: api.get_album_info(
-            album_id=id, include_tracks=True).get('tracks', {})
+        def gfunc():
+            return api.get_album_info(album_id=id, include_tracks=True).get('tracks', {})
 
         return self._get_all_lambda(params, gfunc)
 
@@ -459,7 +529,6 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def get_collection(self, params):
         ratingthreshold = params.get('rating', [0])[0]
-        shuffle = params.get('shuffle', [''])[0] == 'yes'
         songs = self._robust_retry(lambda: api.get_all_songs())
         if len(songs) == 0:
             logger.warning("No songs in your collection!?!")
@@ -472,9 +541,7 @@ class GetHandler(BaseHTTPRequestHandler):
                 if int(songrating) < ratingthreshold:
                     songs.remove(song)
 
-        if shuffle:
-            logger.info('Shuffling the collection')
-            random.shuffle(songs)
+        shuffle_list(songs, params)
 
         logger.info('Getting your collection: %s tracks', len(songs))
         return self._get_all_lambda(params, lambda: songs, tuple_function=to_id_or_nid_track)
@@ -490,7 +557,7 @@ class GetHandler(BaseHTTPRequestHandler):
             if match and 'artist' in match and 'artistId' in match['artist']:
                 logger.info('Selected artist: %s (%s)', match['artist'][
                             'name'], match['artist']['artistId'])
-                logger.debug(pprint.pformat(match))
+                pp_debug(match)
                 return match['artist']['artistId']
             else:
                 logger.warning('No matching found.')
@@ -499,14 +566,14 @@ class GetHandler(BaseHTTPRequestHandler):
             if match and 'track' in match and 'storeId' in match['track']:
                 logger.info('Selected song: %s - %s (%s)', match['track'][
                             'artist'], match['track']['title'], match['track']['storeId'])
-                logger.debug(pprint.pformat(match))
+                pp_debug(match)
                 return match['track']['storeId']
             else:
                 logger.warning('No matching found.')
         elif type == 'matches':
             results = self._robust_retry(lambda: api.search(
                 '%s %s' % (query_artist, query_title), max_results))
-            logger.debug(pprint.pformat(results))
+            pp_debug(results)
             match = results['song_hits']
             if match:
                 return match
@@ -517,7 +584,7 @@ class GetHandler(BaseHTTPRequestHandler):
             if match and 'album' in match and 'albumId' in match['album']:
                 logger.info('Selected album: %s - %s (%s)', match['album'][
                             'artist'], match['album']['name'], match['album']['albumId'])
-                logger.debug(pprint.pformat(match))
+                pp_debug(match)
                 return match['album']['albumId']
             else:
                 logger.warning('No matching found.')
@@ -527,7 +594,7 @@ class GetHandler(BaseHTTPRequestHandler):
     def _search_for_match(self, query_artist, query_title, result_key, not_exact, match_func):
         search_string = ('%s %s' % (query_artist, query_title)).strip()
         results = self._robust_retry(lambda: api.search(search_string))
-        logger.debug(pprint.pformat(results))
+        pp_debug(results)
         if not_exact and result_key in results and len(results[result_key]) > 0:
             logger.debug('I\'m feeling lucky: lets select the first album in list!')
             return results[result_key][0]
@@ -556,7 +623,7 @@ class GetHandler(BaseHTTPRequestHandler):
         else:
             logger.info('Reporting rating=%s on song with id \'%s\': %s - %s',
                         rating, song_id, info['artist'], info['title'])
-            logger.debug(pprint.pformat(info))
+            pp_debug(info)
             info['rating'] = rating
             self._robust_retry(lambda: api.change_song_metadata([info]))
         return True
@@ -606,6 +673,17 @@ class GetHandler(BaseHTTPRequestHandler):
         self.rfile.close()
 
 
+def pp_debug(to_print, f_string="%s"):
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(f_string, pprint.pformat(to_print))
+
+
+def shuffle_list(track_list, params):
+    if params.get("shuffle", [""])[0] == "yes":
+        logger.info("Shuffling tracks")
+        random.shuffle(track_list)
+
+
 def matches_artist(result, artist, title):
     return result['artist'].get('name', '').lower().strip() == artist
 
@@ -618,6 +696,10 @@ def matches_artist_title(result, artist, title):
 def matches_album_artist(result, artist, title):
     return result['album'].get('name', '').lower().strip() == title and \
            result['album'].get('artist', '').lower().strip() == artist
+
+
+def to_metajam_track(track):
+    return track["metajamCompactKey"], track
 
 
 def to_id_or_share_token(track):
@@ -634,9 +716,12 @@ def to_id_or_nid_track(track):
     return id_or_nid, track
 
 
-def match_to_track(song):
-    track = song['track']
+def to_store_id_track(track):
     return track.get('storeId'), track
+
+
+def match_to_track(song):
+    return to_store_id_track(song['track'])
 
 
 def playlist_tuple_to_track(p_tuple):
@@ -667,7 +752,11 @@ def config_handlers(http_server):
             '/get_new_station_by_search': GetHandler.handle_new_station_by_search,  # aa
             '/like_song': GetHandler.rate_song,
             '/dislike_song': GetHandler.rate_song,
-            '/get_version': GetHandler.handle_version
+            '/get_version': GetHandler.handle_version,
+            '/get_top_songs': GetHandler.handle_top_songs,
+            '/get_situations': GetHandler.get_situations,
+            '/get_listen_now': GetHandler.get_listen_now,
+            '/get_listen_now_list': GetHandler.get_listen_now_list
         }
         http_server.head_handlers = {
             '/get_song': GetHandler.handle_song
@@ -830,7 +919,7 @@ def checkLatestVersion():
             logger.warning('There is a new %s release of %s. Consider the idea to update your '
                            'installation in order to keep it working!\n', latest_version, programName)
     except requests.exceptions.HTTPError as http_err:
-        logger.warn('Error in fetching version information %s', http_err)
+        logger.warning('Error in fetching version information %s', http_err)
     except ValueError:
         logger.debug('Error on malformed version data (\'%s\', \'%s\')',
                      latest_version, programVersion)
@@ -935,7 +1024,7 @@ if __name__ == '__main__':
 
     safeConfig = config.copy()
     safeConfig['password'] = '***OMITTED***'   # for debug dump
-    logger.debug('configuration used:\n%s\n', pprint.pformat(safeConfig))
+    pp_debug(safeConfig, f_string='configuration used:\n%s')
 
     if config['keyring_service'] is not None or config['keyring_entry'] is not None:
         config['password'] = getKeyringPassword()
