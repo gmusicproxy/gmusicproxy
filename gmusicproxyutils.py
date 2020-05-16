@@ -8,11 +8,34 @@ from xml.sax.saxutils import escape
 REQ_TYPE = 'REQUEST_TYPE'
 REQ_PATH = 'REQUEST_PATH'
 REQ_URIINFO = 'REQUEST_URI'
+REQ_OUTPUT_FORMAT = 'REQ_OUTPUT_FMT'
 
-XSPF_MIME = "application/xspf+xml"
-M3U_MIME = "audio/mpegurl"
-JSON_MIME = "application/json"
-TXT_MIME = "text/plain"
+GMP_DEFAULT_FORMAT = 'm3u'
+
+XSPF_MIME = 'application/xspf+xml'
+XML_MIME = 'application/xml'
+M3U_MIME = 'audio/mpegurl'
+A_M3U_MIME = 'application/mpegurl'
+XM3U_MIME = 'audio/x-mpegurl'
+A_XM3U_MIME = 'application/x-mpegurl'
+JSON_MIME = 'application/json'
+TXT_MIME = 'text/plain'
+
+ACCEPT_MAPPING = {'*/*': GMP_DEFAULT_FORMAT,
+                  JSON_MIME: 'json', 
+                  XML_MIME: 'xml',
+                  XSPF_MIME: 'xml',
+                  A_M3U_MIME: 'm3u',
+                  A_XM3U_MIME: 'extended_m3u',
+                  M3U_MIME: 'm3u',
+                  XM3U_MIME: 'extended_m3u',
+                  'json': 'json',
+                  'xspf': 'xspf',
+                  'xml': 'xspf',
+                  'm3u': 'm3u',
+                  'txt': 'txt',
+                  'text': 'txt',
+                  'xm3u': 'extended_m3u'}
 
 
 class GMSongsCache:
@@ -53,8 +76,7 @@ class GMSongsCache:
     def lookup_song(self, id):
         cache_idx = self.index.get(id, -1)
         if cache_idx != -1:
-            song = self.cache[cache_idx]
-            return song.copy()
+            return self.cache[cache_idx]
 
     def get_last_update(self):
         return self.last_update
@@ -68,10 +90,8 @@ class PlaylistMeta:
         self.api_call = api_call
         self.params = params
         self.host_and_port = host_and_port
-        self.format = params.get('format', ['m3u'])[0].lower().strip()
-        if self.format == 'text':
-            self.format = 'txt'
-        self.base_params = {} if api_call == 'song' else {"format":self.format}
+        self.format = params.get(REQ_OUTPUT_FORMAT)
+        self.base_params = {} if api_call == 'song' or 'format' not in params else {"format":self.format}
 
     def get_file_name(self):
         print(self.params[REQ_URIINFO])
@@ -79,10 +99,14 @@ class PlaylistMeta:
 
     def get_gmp_url(self, g_id, record):
         qs_params = record.get("qstring", {})
-        qs_params["id"] = g_id
+        path = ''
+        if 'id' in self.params:
+            qs_params["id"] = g_id
+        else:
+            path = f'/{g_id}'
         qs_params.update(self.base_params)
-        q_string = uparse.urlencode(qs_params)
-        return f'{self.base_url}?{q_string}'
+        q_string = '?' + uparse.urlencode(qs_params) if len(qs_params) > 0 else ''
+        return f'{self.base_url}{path}{q_string}'
 
 
 class TextWriter:
@@ -185,7 +209,7 @@ class SPFWriter:
 
 def make_xml_tag(tag_name, tag_value):
     tval = str(tag_value)
-    if tag_value is None or len(tval) is 0:
+    if tag_value is None or len(tval) == 0:
         return ''
     return '<%s>%s</%s>' % (tag_name, escape(tval), tag_name)
 

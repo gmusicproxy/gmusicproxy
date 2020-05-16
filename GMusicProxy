@@ -70,9 +70,11 @@ except ImportError:
     pass
 
 # These requests require all access.
-ALL_ACCESS = ['/get_all_stations', '/get_station', '/get_ifl_station', '/get_album', '/get_top_tracks_artist',
-              '/get_discography_artist', '/search_id', '/get_new_station_by_id', '/get_new_station_by_search']
+ALL_ACCESS = ['get_all_stations', 'get_station', 'get_ifl_station', 'get_album', 'get_top_tracks_artist',
+              'get_discography_artist', 'search_id', 'get_new_station_by_id', 'get_new_station_by_search']
 STATION_TYPES = ["song", "artist", "album", "curated"]
+# Unique id extracted from path or from id parameter
+GM_ID = 'GM_REQ_ID'
 
 class MultiThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
@@ -85,10 +87,11 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def handle_song(self, params):
         send_icy_meta = 'icy-metadata' in self.headers or params.get('icy-metadata', None)
-        return 'id' in params and self._get_song(id=params['id'][0], send_icecast=send_icy_meta)
+        song_id = params[GM_ID]
+        return song_id is not None and self._get_song(id=song_id, send_icecast=send_icy_meta)
 
     def handle_song_info(self, params):
-        info = self._get_song_info(params.get('id', ['~'])[0])
+        info = self._get_song_info(params.get(GM_ID, '~'))
         return self.send_json_response(json.dumps(info))
 
     def handle_version(self, params):
@@ -100,17 +103,17 @@ class GetHandler(BaseHTTPRequestHandler):
         return True
 
     def handle_ifl_station(self, params):
-        params['id'] = 'IFL'
+        params[GM_ID] = 'IFL'
         return self.get_station(params)
 
     def handle_album(self, params):
-        if not 'id' in params:
+        if not GM_ID in params:
             return False
-        self._get_album(id=params['id'][0], params=params)
+        self._get_album(id=params[GM_ID], params=params)
         return True
 
     def handle_top_tracks_artist(self, params):
-        if not 'id' in params:
+        if not GM_ID in params:
             return False
         self._get_all_lambda(params, lambda: self._get_top_tracks_artist(params))
         return True
@@ -134,7 +137,7 @@ class GetHandler(BaseHTTPRequestHandler):
                               max_results=params.get('num_tracks', [None])[0])
         if result and len(result) > 0:
             if p_type == 'artist':
-                params['id'] = [result]
+                params[GM_ID] = result
                 self._get_all_lambda(params, lambda: self._get_top_tracks_artist(params))
             elif p_type == 'song':
                 self._get_song(result)
@@ -145,7 +148,7 @@ class GetHandler(BaseHTTPRequestHandler):
         return True
 
     def handle_new_station_by_id(self, params):
-        if not ('id' in params and 'type' in params) or self._is_invalid_persistent(params):
+        if not (GM_ID in params and 'type' in params) or self._is_invalid_persistent(params):
             return False
 
         return self._get_all_lambda(params, lambda: self._get_new_station(params))
@@ -157,7 +160,7 @@ class GetHandler(BaseHTTPRequestHandler):
         result = self._search(type=s_type, query_title=params.get('title', [''])[0],
                               query_artist=params.get('artist', [''])[0], exact=params.get('exact', ['no'])[0].lower().strip())
         if result and len(result) > 0:
-            params['id'] = [result]
+            params[GM_ID] = result
             self._get_all_lambda(params, lambda: self._get_new_station(params))
         return True
 
@@ -166,14 +169,31 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def _process_request(self, request_type, handlers):
         logger.debug('%s request path: %s', request_type, self.path)
+        h_name, params = self.build_request_variables(request_type)
+        dispatch = handlers.get(h_name, GetHandler._send_500)
+        dispatch(self, params) or self._send_500(params)
+
+    def build_request_variables(self, request_type):
         parsed_path = urlparse(self.path)
+        path_tokens = parsed_path.path.split('/')
         params = parse_qs(parsed_path.query)
         params[gmputils.REQ_TYPE] = request_type
         params[gmputils.REQ_PATH] = parsed_path.path
         params[gmputils.REQ_URIINFO] = parsed_path
-        dispatch = handlers.get(parsed_path.path, GetHandler._send_500)
+        requested_handler = path_tokens[1]
+        path_id = path_tokens[2] if len(path_tokens) > 2 else None
+        params[GM_ID] = params.get('id', [path_id])[0]
+        # prefer format parameter for now
+        o_fmt = self.get_output_fmt((params.get("format", [""]) + self.headers.get('Accept', '').split(',')))
+        params[gmputils.REQ_OUTPUT_FORMAT] = o_fmt
+        return requested_handler, params
 
-        dispatch(self, params) or self._send_500(params)
+    def get_output_fmt(self, all_formats):
+        for f in all_formats:
+            gmp_fmt = gmputils.ACCEPT_MAPPING.get(f)
+            if gmp_fmt:
+                return gmp_fmt
+        return gmputils.GMP_DEFAULT_FORMAT
 
     def send_empty_aa_response(self, params):
         logger.warning('This functionality requires an All Access subscription!')
@@ -223,14 +243,14 @@ class GetHandler(BaseHTTPRequestHandler):
         return metadata.encode('utf-8')
 
     def _get_song(self, id, only_headers=False, send_icecast=False):
-        info = self._get_song_info(id)
+        info = self._get_song_info(id).copy()
         if info is None:
             logger.info('Streaming song with id \'%s\'', id)
             tagsBin = None
             tagsSize = 0
             songSize = 0
         else:
-            logger.info('Streaming song with id \'%s\': %s - %s', id, info['artist'], info['title'])
+            logger.info("Streaming song with id '%s': %s - %s", id, info.get('artist'), info.get('title'))
             pp_debug(info)
             tags = eyed3.id3.Tag()
             tags.artist = info.get('artist', None)
@@ -312,7 +332,7 @@ class GetHandler(BaseHTTPRequestHandler):
             if do_shoutcast:
                 self.wfile.write(self._icy_metadata(tags.album, tags.artist, tags.title))
         return True
-
+    
     def _get_song_info(self, id):
         info = self._get_from_cache(id)
         if info:
@@ -332,8 +352,8 @@ class GetHandler(BaseHTTPRequestHandler):
 
     def _get_from_cache(self, id):
         time_delta = datetime.datetime.now() - self.server.all_songs_cache.get_last_update()
-        # update every 4 hours at the most
-        if time_delta > datetime.timedelta(hours=4):
+        # update every 6 hours at the most
+        if time_delta > datetime.timedelta(hours=6):
             logger.debug('Refreshing songs cache')
             self._fetch_songs_list_cache()
         return self.server.all_songs_cache.lookup_song(id)
@@ -354,12 +374,12 @@ class GetHandler(BaseHTTPRequestHandler):
         return self._get_all_lambda(params, lambda: self._get_listen_now(params), api_call='listen_now_list', tuple_function=to_metajam_track)
 
     def get_listen_now_list(self, params):
-        ln_id = params.get("id", [None])[0]
+        ln_id = params.get(GM_ID)
         if ln_id is None:
             return False
 
         elif ln_id.endswith(".station"):
-            params["id"] = [ln_id[:-8]]
+            params[GM_ID] = ln_id[:-8]
             return self.get_station(params)
         else:
             return self._get_album(ln_id, params)
@@ -370,8 +390,8 @@ class GetHandler(BaseHTTPRequestHandler):
         if len(songs) == 0:
             logger.warning("No top tracks!?!")
             return
-
-        shuffle_list(songs, params)
+        with self.server.lock:
+            self.server.all_songs_cache.add_all_songs(songs)
         return songs
 
     def _get_situations(self):
@@ -407,9 +427,6 @@ class GetHandler(BaseHTTPRequestHandler):
             else:
                 if "album" in item:
                     info = item["album"]["id"]
-                    # albumId is the next id param
-                    # our api is get_album
-                    # should be able to just return the info item
                     # Listen Now is used as the prefix to the description
                     listen_now_list.append(info)
         return listen_now_list
@@ -423,6 +440,7 @@ class GetHandler(BaseHTTPRequestHandler):
             tuple_function = to_nid_track
         track_tuples = map(tuple_function, results)
         filtered = filter(lambda tid: tid[0] is not None, track_tuples)
+        shuffle_list(filtered, params)
         mime, file_name, plist = writer.generate(filtered)
         logger.debug("Generated playlist for %s as %s:\n%s", api_call, mime, plist)
         self._send_headers(200, mime, 'inline; filename=%s' % file_name)
@@ -430,7 +448,7 @@ class GetHandler(BaseHTTPRequestHandler):
         return True
 
     def get_station(self, params):
-        station_id = params.get('id', None)
+        station_id = params.get(GM_ID, None)
         if station_id is None:
             return False
         numTracks = params.get('num_tracks', [defaultNumberTracksStation])[0]
@@ -447,7 +465,7 @@ class GetHandler(BaseHTTPRequestHandler):
             logger.debug("Transient delete completed")
 
     def _get_new_station(self, params):
-        id = params['id'][0]
+        id = params[GM_ID]
         type = params['type'][0].lower().strip()
         arg_idx = STATION_TYPES.index(type)
         id_args = [None, None, None, None]
@@ -468,10 +486,9 @@ class GetHandler(BaseHTTPRequestHandler):
         return station
 
     def get_playlist(self, params):
-        playlist_id = params.get('id', None)
+        playlist_id = params.get(GM_ID, None)
         if playlist_id is None:
             return False
-        playlist_id = playlist_id[0]
         logger.info('Getting tracks from playlist with id \'%s\'', playlist_id)
 
         target_playlist = None
@@ -493,7 +510,6 @@ class GetHandler(BaseHTTPRequestHandler):
             logger.warning("Playlist not found!")
             return False
 
-        shuffle_list(target_playlist, params)
         full_playlist = []
         for track in target_playlist:
             if 'trackId' in track:
@@ -512,7 +528,7 @@ class GetHandler(BaseHTTPRequestHandler):
         return self._get_all_lambda(params, gfunc)
 
     def _get_top_tracks_artist(self, params):
-        id = params['id'][0]
+        id = params[GM_ID]
         numTracks = params.get('num_tracks', [defaultNumberTopTracks])[0]
         artist = api.get_artist_info(artist_id=id, include_albums=False,
                             max_top_tracks=numTracks, max_rel_artist=0)
@@ -520,7 +536,7 @@ class GetHandler(BaseHTTPRequestHandler):
         return artist.get('topTracks', {})
 
     def get_discography_artist(self, params):
-        artist_id = params.get('id', [None])[0]
+        artist_id = params.get(GM_ID, None)
         logger.debug('get_discography_artist: %s', artist_id)
         if artist_id is None:
             return False
@@ -540,8 +556,6 @@ class GetHandler(BaseHTTPRequestHandler):
                 songrating = song.get('rating', ratingthreshold)
                 if int(songrating) < ratingthreshold:
                     songs.remove(song)
-
-        shuffle_list(songs, params)
 
         logger.info('Getting your collection: %s tracks', len(songs))
         return self._get_all_lambda(params, lambda: songs, tuple_function=to_id_or_nid_track)
@@ -608,11 +622,11 @@ class GetHandler(BaseHTTPRequestHandler):
                         return result
 
     def rate_song(self, params):
-        song_id = params.get('id', None)
+        song_id = params.get(GM_ID, None)
         if song_id is None:
             return False
 
-        rating = 5 if params.get(self.REQ_PATH) == '/like_song' else 1
+        rating = 5 if params.get(gmputils.REQ_PATH).startswith('/like_song') else 1
         info = self.server.all_songs_cache.lookup_song(song_id)
         if info is None and song_id[0] == 'T':
             info = self._add_to_cache(song_id)
@@ -636,7 +650,7 @@ class GetHandler(BaseHTTPRequestHandler):
         try:
             BaseHTTPRequestHandler.handle_one_request(self)
         except CallFailure as e:
-            if '401 Client Error: Unauthorized' in e.message and config['device_id'] != '**auto**':
+            if '401 Client Error: Unauthorized' in str(e) and config['device_id'] != '**auto**':
                 logger.warning(
                     'Server denied authorization, trying to reconnect...')
                 api.logout()
@@ -652,11 +666,11 @@ class GetHandler(BaseHTTPRequestHandler):
             else:
                 raise
         except socket.error as e:
-            if e[0] == errno.ECONNRESET:
+            if e.errno == errno.ECONNRESET:
                 logger.warning('Detected connection reset.')
-            elif e[0] == errno.EPIPE:
+            elif e.errno == errno.EPIPE:
                 logger.warning('Detected remote peer disconnected.')
-            elif e[0] == 10053:
+            elif e.errno == 10053:
                 logger.warning(
                     'An established connection was aborted by the software in your host machine.')
             else:
@@ -735,28 +749,28 @@ def to_albumid_track(album):
 
 def config_handlers(http_server):
         http_server.get_handlers = {
-            '/get_song': GetHandler.handle_song,
-            '/get_song_info': GetHandler.handle_song_info,
-            '/get_all_stations': GetHandler.get_all_stations,  # aa
-            '/get_all_playlists': GetHandler.get_all_playlists,
-            '/get_station': GetHandler.get_station,  # aa
-            '/get_ifl_station': GetHandler.handle_ifl_station,  # aa
-            '/get_playlist': GetHandler.get_playlist,
-            '/get_album': GetHandler.handle_album,  # aa
-            '/get_top_tracks_artist': GetHandler.handle_top_tracks_artist,  # aa
-            '/get_discography_artist': GetHandler.get_discography_artist,  # aa
-            '/get_collection': GetHandler.get_collection,
-            '/search_id': GetHandler.handle_search_id,  # aa
-            '/get_by_search': GetHandler.handle_by_search,  # aa
-            '/get_new_station_by_id': GetHandler.handle_new_station_by_id,  # aa
-            '/get_new_station_by_search': GetHandler.handle_new_station_by_search,  # aa
-            '/like_song': GetHandler.rate_song,
-            '/dislike_song': GetHandler.rate_song,
-            '/get_version': GetHandler.handle_version,
-            '/get_top_songs': GetHandler.handle_top_songs,
-            '/get_situations': GetHandler.get_situations,
-            '/get_listen_now': GetHandler.get_listen_now,
-            '/get_listen_now_list': GetHandler.get_listen_now_list
+            'get_song': GetHandler.handle_song,
+            'get_song_info': GetHandler.handle_song_info,
+            'get_all_stations': GetHandler.get_all_stations,  # aa
+            'get_all_playlists': GetHandler.get_all_playlists,
+            'get_station': GetHandler.get_station,  # aa
+            'get_ifl_station': GetHandler.handle_ifl_station,  # aa
+            'get_playlist': GetHandler.get_playlist,
+            'get_album': GetHandler.handle_album,  # aa
+            'get_top_tracks_artist': GetHandler.handle_top_tracks_artist,  # aa
+            'get_discography_artist': GetHandler.get_discography_artist,  # aa
+            'get_collection': GetHandler.get_collection,
+            'search_id': GetHandler.handle_search_id,  # aa
+            'get_by_search': GetHandler.handle_by_search,  # aa
+            'get_new_station_by_id': GetHandler.handle_new_station_by_id,  # aa
+            'get_new_station_by_search': GetHandler.handle_new_station_by_search,  # aa
+            'like_song': GetHandler.rate_song,
+            'dislike_song': GetHandler.rate_song,
+            'get_version': GetHandler.handle_version,
+            'get_top_songs': GetHandler.handle_top_songs,
+            'get_situations': GetHandler.get_situations,
+            'get_listen_now': GetHandler.get_listen_now,
+            'get_listen_now_list': GetHandler.get_listen_now_list
         }
         http_server.head_handlers = {
             '/get_song': GetHandler.handle_song
@@ -973,7 +987,8 @@ if __name__ == '__main__':
     defaultNumberTopTracks = 20
     programDescription = 'Google Play Music Proxy'
     programName = 'gmusicproxy'
-    programVersion = '2.1.0'
+    with open("version.json") as f:
+        programVersion = json.load(f)["version"]
     configFilename = '%s.cfg' % programName
     transientStationName = '%s station ' % programDescription
     transientStationIds = []

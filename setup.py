@@ -5,13 +5,13 @@ import re
 from setuptools import setup, find_packages
 import sys
 import os
+import json
 
 GMUSICPROXYFILE = 'GMusicProxy'
-version_line = open(GMUSICPROXYFILE).read()
-version_re = r"programVersion = ['\"]([^'\"]*)['\"]"
-match = re.search(version_re, version_line, re.M)
+with open("version.json") as f:
+        match = json.load(f)
 if match:
-    version = match.group(1)
+    version = match["version"]
 else:
     raise RuntimeError("Could not find version in '%s'" % GMUSICPROXYFILE)
 
@@ -19,9 +19,9 @@ setup(
     name='gmusicproxy',
     version=version,
     author='Mario Di Raimondo et al',
-    author_email='mario.diraimondo@gmail.com',
+    author_email='gmusicproxy@gmail.com',
     url='https://github.com/gmusicproxy/gmusicproxy',
-    scripts=[GMUSICPROXYFILE],
+    scripts=[GMUSICPROXYFILE, "version.json", "gmusicproxyutils.py"],
     license=open('LICENSE').read(),
     description='Google Play Music Proxy - "Let\'s stream Google Play Music using any music program"',
     long_description=(open('README.md').read()),
