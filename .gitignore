@@ -39,5 +39,8 @@ nosetests.xml
 # PyCharm
 .idea
 
+# VSCode
+.vscode
+
 pip-selfcheck.json
 

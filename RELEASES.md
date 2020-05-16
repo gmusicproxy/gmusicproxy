@@ -1,5 +1,14 @@
 # GMusicProxy Release Notes
 
+- 2.2.0 (2020-05-16)
+  - Updated base python docker image
+  - OAuth is now the supported authentiaction mechanism
+  - Added end points for Listen Now, Situations, and Top Songs
+  - Added Accept header handling
+  - Added path based retrieval (RESTFul)
+  - Additional Python 2 to 3 cleanup
+  - Added `-T` option to support port mappings in responses. e.g. `docker ... -p 80:9999`
+  - Added version.json
 - 2.1.1 (2020-04-26)
   - Merged PR to address album search error
   - Added documentation for Official Docker Build

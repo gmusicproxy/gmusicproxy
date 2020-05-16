@@ -23,8 +23,8 @@ TXT_MIME = 'text/plain'
 
 ACCEPT_MAPPING = {'*/*': GMP_DEFAULT_FORMAT,
                   JSON_MIME: 'json', 
-                  XML_MIME: 'xml',
-                  XSPF_MIME: 'xml',
+                  XML_MIME: 'xspf',
+                  XSPF_MIME: 'xspf',
                   A_M3U_MIME: 'm3u',
                   A_XM3U_MIME: 'extended_m3u',
                   M3U_MIME: 'm3u',
@@ -253,7 +253,7 @@ def build_writer(host_and_port, api_call, params):
     requested_fmt = p_meta.format
     if requested_fmt == 'txt':
         writer = TextWriter(p_meta)
-    elif requested_fmt == 'xml' or requested_fmt == 'json':
+    elif requested_fmt == 'xspf' or requested_fmt == 'json':
         writer = SPFWriter(p_meta)
     else:
         writer = M3UWriter(p_meta)

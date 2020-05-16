@@ -807,6 +807,8 @@ def getOptions(filename):
     parser.add_argument(
         '-H', '--host', help='host in the generated URLs [default: autodetected local ip address]')
     parser.add_argument(
+        '-T', '--host-port', help='port in the generated URLs [default: -P or 9999]')
+    parser.add_argument(
         '-b', '--bind-address', help='ip address to bind to [default: 0.0.0.0=all]')
     parser.add_argument('-P', '--port', type=int,
                         help='default TCP port to use [default: 9999]')
@@ -866,6 +868,8 @@ def getOptions(filename):
         config_values['port'] = '9999'
     if 'device_id' not in config_values:
         config_values['device_id'] = '**auto**'
+    if 'host_port' not in config_values:
+        config_values['host_port'] = config_values['port']
 
     parser.set_defaults(**config_values)
     args = parser.parse_args()
@@ -1053,8 +1057,8 @@ if __name__ == '__main__':
 
     with open("README.md", "r") as read_me:
         gmp_md = ''.join(read_me.readlines())
-    help_page = markdown.markdown(gmp_md)
-    help_page = "<!DOCTYPE html><html lang='en'><head><title>GMusicProxy</title></head><body>" + help_page + "</body></html>"
+    help_page = markdown.markdown(gmp_md, extensions=['fenced_code'])
+    help_page = "<!DOCTYPE html><html lang='en'><head><title>GMusicProxy</title><style>body {font-family: Arial, Helvetica, sans-serif; margin-top: 20px;margin-bottom: 20px;margin-right: 20px;margin-left: 20px;}</style></head><body>" + help_page + "</body></html>"
 
     if config['list_devices']:
         listDevices()
@@ -1079,7 +1083,7 @@ if __name__ == '__main__':
 
     server.lock = threading.Lock()
     server.all_songs_cache = gmputils.GMSongsCache(logger)
-    server.host_and_port = '%s:%s' % (config['host'], config['port'])
+    server.host_and_port = '%s:%s' % (config['host'], config['host_port'])
     server.json_version = json.dumps({"version": programVersion})
     config_handlers(server)
 
