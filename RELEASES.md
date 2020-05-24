@@ -1,5 +1,9 @@
 # GMusicProxy Release Notes
 
+- 2.2.1 (2020-05-24)
+  - Corrected shuffle error (#128)
+  - Added default output format option (-F, --default-format)
+  - Updated documentation for common request parameters, some additional usage exmples, minor clean up
 - 2.2.0 (2020-05-16)
   - Updated base python docker image
   - OAuth is now the supported authentiaction mechanism

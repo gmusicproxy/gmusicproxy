@@ -58,6 +58,7 @@ import json
 import gmusicproxyutils as gmputils
 import datetime
 import markdown
+import itertools
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from gmusicapi.exceptions import CallFailure
 try:
@@ -440,8 +441,8 @@ class GetHandler(BaseHTTPRequestHandler):
             tuple_function = to_nid_track
         track_tuples = map(tuple_function, results)
         filtered = filter(lambda tid: tid[0] is not None, track_tuples)
-        shuffle_list(filtered, params)
-        mime, file_name, plist = writer.generate(filtered)
+        tracks = shuffle_truncate_if_needed(filtered, params)
+        mime, file_name, plist = writer.generate(tracks)
         logger.debug("Generated playlist for %s as %s:\n%s", api_call, mime, plist)
         self._send_headers(200, mime, 'inline; filename=%s' % file_name)
         self.wfile.write(plist.encode('utf-8'))
@@ -692,10 +693,16 @@ def pp_debug(to_print, f_string="%s"):
         logger.debug(f_string, pprint.pformat(to_print))
 
 
-def shuffle_list(track_list, params):
+def shuffle_truncate_if_needed(track_list, params):
+    the_list = list(track_list)
     if params.get("shuffle", [""])[0] == "yes":
-        logger.info("Shuffling tracks")
-        random.shuffle(track_list)
+        logger.debug("Shuffling tracks")
+        random.shuffle(the_list)
+    max_tracks = params.get("num_tracks", [""])[0]
+    max_tracks = int(max_tracks) if max_tracks.isdigit() else None
+    if max_tracks and len(the_list) > max_tracks:
+        return itertools.islice(the_list, 0, max_tracks)
+    return the_list
 
 
 def matches_artist(result, artist, title):
@@ -823,8 +830,8 @@ def getOptions(filename):
                         action='store_true', help='daemonize the program')
     parser.add_argument('-v', '--disable-version-check', default=False,
                         action='store_true', help='disable check for latest available version')
-    parser.add_argument('-x', '--extended-m3u', default=False,
-                        action='store_true', help='enable non-standard extended m3u headers')
+    parser.add_argument('-F', '--default-format', default=gmputils.GMP_DEFAULT_FORMAT, type=str,
+                        help='Sets the defualut output format')
     parser.add_argument('-s', '--shoutcast-metadata', default=False, action='store_true',
                         help='enable Shoutcast metadata protocol support (disabling IDv3 tags)')
     parser.add_argument('-C', '--disable-playcount-increment', default=False, action='store_true',
@@ -880,8 +887,7 @@ def getOptions(filename):
 def listDevices():
     devices = api.get_registered_devices()
     if len(devices) == 0:
-        logger.warning(
-            'No Android or iOS devices registered in your Google account.')
+        logger.warning('No Android or iOS devices registered in your Google account.')
     else:
         api.logout()
         for d in devices:
@@ -1024,6 +1030,15 @@ if __name__ == '__main__':
 
     logger.info('%s %s\n', programDescription, programVersion)
 
+    if config['default_format'] != gmputils.GMP_DEFAULT_FORMAT:
+        if not config['default_format'] in gmputils.ACCEPT_MAPPING.values():
+            logger.error('Invalid format provided: %s. Valid values are %s', 
+            config['default_format'], ', '.join(set(gmputils.ACCEPT_MAPPING.values())))
+            sys.exit(1)
+        logger.info("Setting default output to %s", config['default_format'])
+        gmputils.GMP_DEFAULT_FORMAT = config['default_format']
+        gmputils.ACCEPT_MAPPING[gmputils.ALL_MIME] = config['default_format']
+
     # preliminar setup for the daemonaization
     if config['daemon']:
         if os.name == 'nt':
@@ -1058,7 +1073,7 @@ if __name__ == '__main__':
     with open("README.md", "r") as read_me:
         gmp_md = ''.join(read_me.readlines())
     help_page = markdown.markdown(gmp_md, extensions=['fenced_code'])
-    help_page = "<!DOCTYPE html><html lang='en'><head><title>GMusicProxy</title><style>body {font-family: Arial, Helvetica, sans-serif; margin-top: 20px;margin-bottom: 20px;margin-right: 20px;margin-left: 20px;}</style></head><body>" + help_page + "</body></html>"
+    help_page = "<!DOCTYPE html><html lang='en'><head><title>GMusicProxy</title><style>body {font-family: Arial, Helvetica, sans-serif; font-size: 12px; margin-top: 20px;margin-bottom: 20px;margin-right: 20px;margin-left: 20px;}</style></head><body>" + help_page + "</body></html>"
 
     if config['list_devices']:
         listDevices()

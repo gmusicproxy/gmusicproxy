@@ -12,6 +12,7 @@ REQ_OUTPUT_FORMAT = 'REQ_OUTPUT_FMT'
 
 GMP_DEFAULT_FORMAT = 'm3u'
 
+ALL_MIME = '*/*'
 XSPF_MIME = 'application/xspf+xml'
 XML_MIME = 'application/xml'
 M3U_MIME = 'audio/mpegurl'
@@ -21,7 +22,7 @@ A_XM3U_MIME = 'application/x-mpegurl'
 JSON_MIME = 'application/json'
 TXT_MIME = 'text/plain'
 
-ACCEPT_MAPPING = {'*/*': GMP_DEFAULT_FORMAT,
+ACCEPT_MAPPING = {ALL_MIME: GMP_DEFAULT_FORMAT,
                   JSON_MIME: 'json', 
                   XML_MIME: 'xspf',
                   XSPF_MIME: 'xspf',
@@ -90,11 +91,10 @@ class PlaylistMeta:
         self.api_call = api_call
         self.params = params
         self.host_and_port = host_and_port
-        self.format = params.get(REQ_OUTPUT_FORMAT)
+        self.format = params.get(REQ_OUTPUT_FORMAT, GMP_DEFAULT_FORMAT)
         self.base_params = {} if api_call == 'song' or 'format' not in params else {"format":self.format}
 
     def get_file_name(self):
-        print(self.params[REQ_URIINFO])
         return self.params[REQ_URIINFO].path.replace('/', '') + "." + self.format
 
     def get_gmp_url(self, g_id, record):
