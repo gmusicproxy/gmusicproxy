@@ -10,7 +10,6 @@ dist
 build
 eggs
 parts
-bin
 var
 sdist
 develop-eggs
@@ -43,4 +42,4 @@ nosetests.xml
 .vscode
 
 pip-selfcheck.json
-
+venv

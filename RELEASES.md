@@ -1,5 +1,9 @@
 # GMusicProxy Release Notes
 
+- 2.3.0 (2020-06-26)
+  - Modified song stream handling that would fail randomly (#134)
+  - Added simple test script
+  - More python 2 cleanup
 - 2.2.1 (2020-05-24)
   - Corrected shuffle error (#128)
   - Added default output format option (-F, --default-format)

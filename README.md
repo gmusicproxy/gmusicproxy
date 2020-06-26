@@ -16,7 +16,7 @@ contributors:
 License: **GPL v3**
 
 ## About
-This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and to manage M3U playlists (e.g., [MPD server][1], [VLC][2], ...). It can work also with a free account without All Access extras.
+This program permits the use of Google Play Music with All Access subscription with any music player that is able to stream MP3 files and to manage playlists (e.g., [MPD server][1], [VLC][2], ...). It can work also with a free account without All Access extras.
 
 Google has a music service with the possibility to stream all the available music using an All Access subscription. The Google-way to listen your collection and the stations is by means of Android devices, web browser, or Chromecast devices to integrate with TVs or HiFi audio systems. These devices are typically closed or limited in someway. Many people use music-systems based on Raspberry-PIs, [MPD][1], or other software and GMP provide an integration point.
 
@@ -38,7 +38,7 @@ Consider that any song, album, artist, playlist or station got a unique ID in Go
 
 Here a list of the supported requests (with some restricted by the availability of a All Access subscription):
 
-- `/get_collection`: reports an M3U playlist with all the songs in your personal collection; the resulting list can be shuffled and/or filtered using the rating; note that not all the rated (liked) songs belong to your collection.
+- `/get_collection`: reports a playlist with all the songs in your personal collection; the resulting list can be shuffled and/or filtered using the rating; note that not all the rated (liked) songs belong to your collection.
   Allowed parameters:
      - [See common request options](#reqoptions)
      - `rating`: an integer value (typically between 1-5) to filter out low rated or unrated songs form your collection
@@ -49,7 +49,7 @@ Here a list of the supported requests (with some restricted by the availability 
      - `artist`: a string to search in the name of the artist in any kind of search
      - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `yes`]
      - [See common request options](#reqoptions)
-- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (an M3U list for the album or for the top songs of an artist and the MP3 file for a song); it is also possible to get the full list of matches reported by Google Music using search with `type=matches` [requires A.A.].
+- `/get_by_search`: makes a search for artist/album/song as `/search_id` and returns the related content (a list for the album or for the top songs of an artist and the MP3 file for a song); it is also possible to get the full list of matches reported by Google Music using search with `type=matches` [requires A.A.].
   Allowed parameters:
      - `type`: search for `artist`, `album`, `song` or `matches` [required]
      - `title`: a string to search in the title of the album or of the song
@@ -60,9 +60,9 @@ Here a list of the supported requests (with some restricted by the availability 
   Allowed parameters:
      - `exact`: a `yes` implies an exact match between the query parameters `artist` and `title` and the real data of the artist/album/song [default: `no`]
      - [See common request options](#reqoptions)
-- `/get_all_playlists`: reports the playlists registered in the account as M3U playlist (with URLs to other M3U playlist) or as plain-text list (with one playlist per line).
+- `/get_all_playlists`: reports the playlists registered in the account as playlist (with URLs to other playlist) 
   The allowed parameters are the same as `/get_all_stations`.
-- `/get_new_station_by_search`: reports as M3U playlist the content of a new (transient or permanent) station created on the result of a search for artist/album/song (a.k.a. "Instant Mix") [requires A.A.].
+- `/get_new_station_by_search`: returns a playlist containing songs from a new (transient or permanent) station created on the result of a search for artist/album/song (a.k.a. "Instant Mix") [requires A.A.].
   Allowed parameters:
      - `type`: search for `artist`, `album` or `song` [required]
      - `title`: a string to search in the title of the album or of the song
@@ -71,25 +71,25 @@ Here a list of the supported requests (with some restricted by the availability 
      - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
      - `name`: the name of the persistent station to create [required if `transient` is `no`]
      - [See common request options](#reqoptions)
-- `/get_new_station_by_id`: reports as M3U playlist the content of a new (transient or permanent) station created on a specified id of an artist/album/song [requires A.A.].
+- `/get_new_station_by_id`: returns a playlist containing tracks from a new (transient or permanent) station created on a specified id of an artist/album/song [requires A.A.].
   Allowed parameters:
      - `id`: the unique identifier of the artist/album/song [required]
      - `type`: the type of id specified among `artist`, `album` and `song` [required]
      - `transient`: a `no` creates a persistent station that will be registered into the account [default: `yes`]
      - `name`: the name of the persistent station to create [required if `transient` is `no`]
      - [See common request options](#reqoptions)
-- `/get_station`: reports an M3U playlist of tracks associated to the given station  [requires A.A.].
+- `/get_station`: reports a playlist of tracks associated to the given station  [requires A.A.].
   Allowed parameters:
      - `id`: the unique identifier of the station [required]
      - [See common request options](#reqoptions)
-- `/get_ifl_station`: reports an M3U playlist of tracks associated to the automatic "I'm feeling lucky" station  [requires A.A.].
+- `/get_ifl_station`: reports a playlist of tracks associated to the automatic "I'm feeling lucky" station  [requires A.A.].
   Allowed parameters:
      - [See common request options](#reqoptions)
 - `/get_playlist`: reports the content of a registered playlist
   Allowed parameters:
      - `id`: the unique identifier of the playlist [required]
      - [See common request options](#reqoptions)
-- `/get_album`: reports the content of an album as an M3U playlist.
+- `/get_album`: reports the content of an album as a playlist.
   Allowed parameters:
      - `id`: the unique identifier of the album [required]
      - [See common request options](#reqoptions)
@@ -99,12 +99,12 @@ Here a list of the supported requests (with some restricted by the availability 
 - `/get_song_info`: returns JSON Metadata for the specified song.
   Allowed parameters:
      - `id`: the unique identifier of the song [required]
-- `/get_top_tracks_artist`: reports an M3U playlist with the top songs of a specified artist [requires A.A.].
+- `/get_top_tracks_artist`: reports a playlist with the top songs of a specified artist [requires A.A.].
   Allowed parameters:
      - `id`: the unique identifier of the artist [required]
      - `type`: the type of id specified among `artist`, `album` and `song` [required]
      - [See common request options](#reqoptions)
-- `/get_discography_artist`: reports the list of available albums of a specified artist as a playlist (with URLs to other M3U playlist) or as plain-text list (with one album per line)  [requires A.A.].
+- `/get_discography_artist`: reports the list of available albums of a specified artist as a playlist (with URLs to other playlists) or as plain-text list (with one album per line)  [requires A.A.].
   Allowed parameters:
      - `id`: the unique identifier of the artist [required]
      - [See common request options](#reqoptions)
@@ -245,20 +245,6 @@ device-id = 54bbd32a309a34ef
 
 When the proxy is launched, it searches for a file named `gmusicproxy.cfg` in the XDG-compliant folders like `/home/USER/.config/` or `/etc/xdg/`. It is possible to specify an arbitrary config file on the command-line using the option `--config`.
 
-### Using keyring to store the password
-Password can be retrieved from one of the available keyrings (e.g. KWallet, Freedesktop Secret Service, Windows Credential Vault, Mac OS X Keychain). Use command-line option `--list-keyring-backends` to find out, which keyring backends are supported on your platform.
-If the default keyring backend is not what you want, you can override it using option `--keyring-backend`.
-
-To read the password from the keyring, specify the options `--keyring-service` and `--keyring-entry`. Use the corresponding keyring manager to store the password or find entry name for one of your existing passwords.
-
-E.g. for KWallet, you can list available service names and entries as follows:
-
-```bash
-# list service names
-kwallet-query -l kdewallet -f ""
-# list entries of service "Passwords"
-kwallet-query -l kdewallet -f "Passwords"
-```
 
 ### Examples of integration
 #### [MPD][1]

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+function join_by { 
+  local d=$1; 
+  shift; 
+  echo -n "$1"; 
+  shift; 
+  printf "%s" "${@/#/$d}"; 
+}
+
+function curl_gmp() {
+  local gurl=$(join_by "/" "${GMP}" "$@") 
+  curl -sH 'Accept: application/json' "http://${gurl}"
+}
+
+function valid_json() {
+  if ! echo "$1" | jq '.' &> /dev/null ; then
+    echo "Failed:"
+    echo $1
+    exit 1
+  fi
+}
+
+GMP=${GMP:-"localhost:9999"}
+GMP_ARTIST=${GMP_ARTIST:-"Pat Metheny"}
+GMP_ARTIST_ID=${GMP_ARTIST_ID:-"Avra6qln3ihsfcdhmkirtzpijaa"}
+
+# Roy Hargrove The RH Factor, Strength
+GMP_SONG=${GMP_SONG:-"Bop Drop"}
+GMP_SONG_ID=${GMP_SONG_ID:-"Tyxxopngvhjm5lx7ukepjtawepe"}
+
+# RH Factor
+GMP_ALBUM=${GMP_ALBUM:-"Strength"}
+GMP_ALBUM_ID=${GMP_ALBUM_ID:-"Tyxxopngvhjm5lx7ukepjtawepe"}
+
+# collection
+JSON=$(curl_gmp "get_collection")
+valid_json "$JSON"
+
+# search_id returns id
+GMP_FOUND_ID=$(curl_gmp "search_id?type=artist&artist=${GMP_ARTIST//[[:space:]]/+}")
+if [[ "${GMP_FOUND_ID}" != "${GMP_ARTIST_ID}" ]]; then 
+  echo "search_id failed"
+  echo "received $GMP_FOUND_ID, expected $GMP_ARTIST_ID"
+  exit 1
+fi
+
+# get_by_search
+JSON=$(curl_gmp "get_by_search?type=artist&artist=${GMP_ARTIST//[[:space:]]/+}")
+valid_json "$JSON"
+
+# get_all_stations
+JSON=$(curl_gmp "get_all_stations")
+valid_json "$JSON"
+
+# get_all_playlists
+JSON=$(curl_gmp "get_all_playlists")
+valid_json "$JSON"
+
+# get_new_station_by_search
+JSON=$(curl_gmp "get_new_station_by_search?type=song&title=${GMP_SONG//[[:space:]]/+}")
+valid_json "$JSON"
+
+# get_new_station_by_id
+JSON=$(curl_gmp "get_new_station_by_id" "${GMP_ARTIST_ID}?type=artist")
+valid_json "$JSON"
+
+# song info
+JSON=$(curl_gmp "get_song_info" "${GMP_SONG_ID}")
+valid_json "$JSON"
+
+
+
