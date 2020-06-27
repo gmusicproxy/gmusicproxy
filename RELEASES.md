@@ -2,7 +2,8 @@
 
 - 2.3.0 (2020-06-26)
   - Modified song stream handling that would fail randomly (#134)
-  - Added simple test script
+  - Added Docker build for Alpine linux, significantly smaller ~130MB (#135)
+  - Added simple test script, docker build script
   - More python 2 cleanup
 - 2.2.1 (2020-05-24)
   - Corrected shuffle error (#128)

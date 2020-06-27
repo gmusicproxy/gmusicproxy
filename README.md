@@ -151,13 +151,14 @@ curl -H 'Accept: application/json' http://[gmp host|ip]:9999/get_all_playlists
 ```
 
 The `format` parameter can be used to generate output in the following formats:
-   - `m3u`: Generates an M3U formatted list. 
-   - `xm3u`: lines of the produced M3U lists to a non-standard format like `artist - song title - album title`
-   - `text`|`txt`: for a plain-text list with lines like `Name of the Station|URL to a song or playlist`
-       - `separator`: when requesting text formatted output, the separator to delineate fields [default: `|`]
-       - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the album is totally omitted) [default: `no`]
-   - `xspf`|`xml`: Returns an [XSPF][7] formatted playlist
-   - `json`: Returns a json formatted playlist following the XSPF json format
+
+- `m3u`: Generates an M3U formatted list. 
+- `xm3u`: lines of the produced M3U lists to a non-standard format like `artist - song title - album title`
+- `text`|`txt`: for a plain-text list with lines like `Name of the Station|URL to a song or playlist`
+     - `separator`: when requesting text formatted output, the separator to delineate fields [default: `|`]
+     - `only_url`: a `yes` creates a list of just URLs in the plain-text lists (the name of the album is totally omitted) [default: `no`]
+- `xspf`|`xml`: Returns an [XSPF][7] formatted playlist
+- `json`: Returns a json formatted playlist following the XSPF json format
 
 ### Changelog
 - See RELEASES.md for release information.
